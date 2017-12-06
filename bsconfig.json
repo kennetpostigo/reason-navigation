@@ -2,6 +2,7 @@
   "name": "ReasonNavigation",
   "sources": "src",
   "refmt": 3,
-  "bs-dependencies": ["reason-react"],
-  "bsc-flags": ["-bs-no-version-header"]
+  "reason": { "react-jsx": 2 },
+  "bsc-flags": ["-bs-no-version-header"],
+  "bs-dependencies": ["reason-react"]
 }

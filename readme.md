@@ -20,6 +20,15 @@
 yarn install reason-navigation
 ```
 
+## bsconfig
+
+```json
+"bs-dependencies": [
+  "reason-react",
+  "reason-navigator",
+]
+```
+
 ## Example
 
 ```reason
@@ -71,7 +80,7 @@ to determine whether it should render on a certain path or not. It also requires
 a `path` that the route needs to match against, and lastly a `render` function
 that passes query params and other data that is useful.
 
-### <Link history: Router.history href: string target: string />
+### `<Link history: Router.history href: string target: string />`
 
 Link needs to be passed the `Router.history` record that contains actions to
 update the browser location. It also takes an `href` to determine where to go

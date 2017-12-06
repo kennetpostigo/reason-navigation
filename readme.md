@@ -25,7 +25,7 @@ yarn install reason-navigation
 ```json
 "bs-dependencies": [
   "reason-react",
-  "reason-navigator",
+  "reason-navigator"
 ]
 ```
 

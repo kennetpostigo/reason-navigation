@@ -1,0 +1,7 @@
+{
+  "name": "ReasonNavigation",
+  "sources": "src",
+  "refmt": 3,
+  "bs-dependencies": ["reason-react"],
+  "bsc-flags": ["-bs-no-version-header"]
+}

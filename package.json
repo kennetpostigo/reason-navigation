@@ -1,0 +1,23 @@
+{
+  "name": "reason-navigation",
+  "version": "0.0.1",
+  "description": "reason navigation",
+  "main": "index.js",
+  "author": "Kennet Postigo <kennetfpostigo@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "build": "bsb -make-world",
+    "start": "bsb -make-world -w",
+    "clean": "bsb -clean-world"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kennetpostigo/reason-navigation.git"
+  },
+  "devDependencies": {
+    "bs-platform": "^2.1.0"
+  },
+  "dependencies": {
+    "reason-react": "^0.3.0"
+  }
+}

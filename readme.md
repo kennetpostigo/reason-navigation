@@ -1,0 +1,112 @@
+<p align="center">
+  <img width="300px" src="assets/reason-navigation.png" />
+</p>
+<h2 style="margin-top: 20px;" align="center">reason-navigation</h2>
+<p style="margin-top: 20px;" align="center">
+  <a href="http://npm.im/reason-navigation">
+    <img src="https://img.shields.io/npm/v/reason-navigation.svg?style=flat-square"/>
+  </a>
+  <a href="http://npm-stat.com/charts.html?package=reason-navigation">
+    <img src="https://img.shields.io/npm/dm/reason-navigation.svg?style=flat-square"/>
+  </a>
+  <a href="http://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/npm/l/reason-navigation.svg?style=flat-square" />
+  </a>
+</p>
+
+## Install
+
+```bash
+yarn install reason-navigation
+```
+
+## Example
+
+```reason
+let component = ReasonReact.statelessComponent("App");
+
+let make = (_children) => {
+  ...component,
+  render: (_self) =>
+    <Router>
+      (
+        (match) =>
+          <div>
+            <h1> (U.se("Reason Router")) </h1>
+            <Link match href="/game"> (U.se("GAME")) </Link>
+            <Route match path="/" render=(() => <Landing match />) />
+            <Route match path="/game" render=(() => <Canvas match />) />
+            <Route
+              match
+              path="/re/:id"
+              render=(
+                () => {
+                  switch (Match.getInt(match.state.params, "id")) {
+                  | Some(v) => Js.log(v)
+                  | None => Js.log("None")
+                  };
+                  <p> (U.se("Query params!")) </p>
+                }
+              )
+            />
+            <Route match path="/highscores" render=(() => <HighScore match />) />
+          </div>
+      )
+    </Router>
+};
+```
+
+## Navigation Components
+
+### `<Router children: (history) => ReasonReact.element/>`
+
+Router takes a function as a child, with a parameter that is passed a history
+object. The body should be a single reason-react component, like a `<div />`
+that wraps a bunch of child `<Route />` components.
+
+### `<Route history: Router.history path: string render: unit => ReasonReact.element />`
+
+Route needs to be passed the `Router.history` record that contains data in order
+to determine whether it should render on a certain path or not. It also requires
+a `path` that the route needs to match against, and lastly a `render` function
+that passes query params and other data that is useful.
+
+### <Link history: Router.history href: string target: string />
+
+Link needs to be passed the `Router.history` record that contains actions to
+update the browser location. It also takes an `href` to determine where to go
+when the link is pressed. and lastly takes a target to determine where to open
+the link.
+
+## Types
+
+### Router.state
+
+```reason
+type state = {
+  path: string,
+  search: string,
+  hash: string,
+  params: Js.Dict.t(string),
+  unlisten: [@bs] (unit => unit)
+};
+```
+
+### Router.actions
+
+```reason
+type actions = {
+  push: string => unit,
+  replace: string => unit,
+  updateMatch: (string, string, Js.Dict.t(string)) => unit
+};
+```
+
+### Router.history
+
+```reason
+type history = {
+  state,
+  actions
+};
+```

@@ -17,6 +17,6 @@ let make = (~history: Router.history, ~path, ~render, _children) => {
       | Some(_) => true
       | None => false
       };
-    match ? render(history.state) : ReasonReact.nullElement
+    match ? render() : ReasonReact.nullElement
   }
 };

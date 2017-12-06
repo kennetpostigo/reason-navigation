@@ -87,6 +87,35 @@ update the browser location. It also takes an `href` to determine where to go
 when the link is pressed. and lastly takes a target to determine where to open
 the link.
 
+## Query Params
+
+When accessing query params, you should use the query accessors that
+`reason-navigation` provides.
+
+### getInt(params: Js.Dict.t(string), field: string) => option(int)
+
+It will return `Some(int)` if they field you are accessing is present and an
+`int`.
+
+```reason
+switch (Match.getInt(match.state.params, "id")) {
+| Some(v) => Js.log(v)
+| None => Js.log("None")
+};
+```
+
+### getString(params: Js.Dict.t(string), field: string) => option(string)
+
+It will return `Some(string)` if they field you are accessing is present and an
+`string`.
+
+```reason
+switch (Match.getString(match.state.params, "id")) {
+| Some(v) => Js.log(v)
+| None => Js.log("None")
+};
+```
+
 ## Types
 
 ### Router.state

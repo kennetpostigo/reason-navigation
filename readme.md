@@ -1,7 +1,7 @@
 <p align="center">
   <img width="300px" src="assets/reason-navigation.png" />
 </p>
-<h2 style="margin-top: 20px;" align="center">reason-navigation</h2>
+<p style="margin-top: 20px; font-size: 24px; font-weight: 500;" align="center">reason-navigation</p>
 <p style="margin-top: 20px;" align="center">
   <a href="http://npm.im/reason-navigation">
     <img src="https://img.shields.io/npm/v/reason-navigation.svg?style=flat-square"/>

@@ -11,9 +11,8 @@ function make(history, path, render, _) {
   newrecord[/* didMount */4] = (function () {
       var match = Match$ReasonNavigation.matchPath(history[/* state */0][/* path */0], path);
       if (match) {
-        var match$1 = match[0];
-        var match$2 = Match$ReasonNavigation.parseUrl(match$1[0], match$1[1], match$1[2]);
-        Curry._3(history[/* actions */1][/* updateMatch */2], match$2[/* search */0], match$2[/* hash */1], match$2[/* params */2]);
+        var match$1 = Match$ReasonNavigation.parseUrl(match[0][1]);
+        Curry._3(history[/* actions */1][/* updateMatch */2], match$1[/* search */0], match$1[/* hash */1], match$1[/* params */2]);
       }
       return /* NoUpdate */0;
     });

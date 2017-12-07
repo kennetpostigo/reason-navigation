@@ -75,102 +75,32 @@ let hasHash = (url) =>
     - push the pattern into a pattern stack
  */
 /* TODO: this throws because of string ops */
-let loopPush = (url, pattern) => {
-  let rec loopPush = (url, pattern, urls, patterns) =>
-    switch (url, pattern) {
-    | ("", "") => Some((urls, patterns))
+let loopPush = (path, pattern) => {
+  let rec loopPush = (path, pattern, pathsAndPatterns) =>
+    switch (path, pattern) {
+    | ("", "") => pathsAndPatterns
     | ("", _)
-    | (_, "") => None
-    | (url, pattern) =>
-      let (newUrls, nextUrl) =
-        if (String.contains_from(url, 1, '/')) {
-          let uNextSlash = String.index_from(url, 1, '/');
-          let uItem = String.sub(url, 1, uNextSlash - 1);
-          ([uItem, ...urls], String.sub(url, uNextSlash, String.length(url) - uNextSlash))
+    | (_, "") => []
+    | (path, pattern) =>
+      let (newUrlHead, nextUrl) =
+        if (String.contains_from(path, 1, '/')) {
+          let uNextSlash = String.index_from(path, 1, '/');
+          let uItem = String.sub(path, 1, uNextSlash - 1);
+          (uItem, String.sub(path, uNextSlash, String.length(path) - uNextSlash))
         } else {
-          ([String.sub(url, 1, String.length(url) - 1), ...urls], "")
+          (String.sub(path, 1, String.length(path) - 1), "")
         };
-      let (newPatterns, nextPattern) =
+      let (newPatternHead, nextPattern) =
         if (String.contains_from(pattern, 1, '/')) {
           let pNextSlash = String.index_from(pattern, 1, '/');
           let pItem = String.sub(pattern, 1, pNextSlash - 1);
-          (
-            [pItem, ...patterns],
-            String.sub(pattern, pNextSlash, String.length(pattern) - pNextSlash)
-          )
+          (pItem, String.sub(pattern, pNextSlash, String.length(pattern) - pNextSlash))
         } else {
-          ([String.sub(pattern, 1, String.length(pattern) - 1), ...patterns], "")
+          (String.sub(pattern, 1, String.length(pattern) - 1), "")
         };
-      loopPush(nextUrl, nextPattern, newUrls, newPatterns)
+      loopPush(nextUrl, nextPattern, [(newUrlHead, newPatternHead), ...pathsAndPatterns])
     };
-  loopPush(url, pattern, [], [])
-};
-
-/*
-  Pop the pattern and path stack until empty
-    - If the fist pop contains a "#" sub from it to the end and set it as the
-      hash. Disregard from the hash to the end.
-    - Check the pop value from the pattern
-      + if it is a search param then put it in search and match params.
-      + if it is a path then do nothing
- */
-let loopPop = (search, hash, params, paths, patterns) => {
-  let rec remainingIterations = (search, hash, params, paths, patterns) =>
-    switch (paths, patterns) {
-    | ([_head, ..._tail], [])
-    | ([], [_head, ..._tail]) =>
-      /* TODO: switch to a data structure that naturally maintains this invariant */
-      raise(
-        Invalid_argument(
-          "loopPop remainingIterations: paths length and patterns length not the same!"
-        )
-      )
-    | ([], []) => {search, hash, params}
-    | ([singlePath], [singlePattern]) =>
-      switch (hasSearch(singlePattern)) {
-      | NoSearch => remainingIterations("?" ++ search, hash, params, [], [])
-      | Search(_) =>
-        let s = String.sub(singlePattern, 1, String.length(singlePattern) - 1);
-        Js.Dict.set(params, s, singlePath);
-        remainingIterations("?" ++ s ++ "=" ++ singlePath ++ "&" ++ search, hash, params, [], [])
-      }
-    | ([pathHead, ...paths], [patternHead, ...patterns]) =>
-      switch (hasSearch(patternHead)) {
-      | NoSearch => remainingIterations(search, hash, params, paths, patterns)
-      | Search(_) =>
-        let s = String.sub(patternHead, 1, String.length(patternHead) - 1);
-        Js.Dict.set(params, s, pathHead);
-        remainingIterations(s ++ "=" ++ pathHead ++ "&" ++ search, hash, params, paths, patterns)
-      }
-    };
-  let firstIteration = (search, hash, params, paths, patterns) =>
-    switch (paths, patterns) {
-    | ([_head, ..._tail], [])
-    | ([], [_head, ..._tail]) =>
-      /* TODO: switch to a data structure that naturally maintains this invariant */
-      raise(
-        Invalid_argument("loopPop firstIteration: paths length and patterns length not the same!")
-      )
-    | ([], []) => {search, hash, params}
-    | ([pathHead, ...paths], [patternHead, ...patterns]) =>
-      switch (hasHash(pathHead), hasSearch(patternHead)) {
-      | (NoHash, NoSearch) => remainingIterations("", "", params, paths, patterns)
-      | (NoHash, Search(_)) =>
-        let s = String.sub(patternHead, 1, String.length(patternHead) - 1);
-        Js.Dict.set(params, s, pathHead);
-        remainingIterations(s ++ "=" ++ pathHead, "", params, paths, patterns)
-      | (Hash(loc), NoSearch) =>
-        let h = String.sub(pathHead, loc, String.length(pathHead) - loc);
-        remainingIterations("?", h, params, paths, patterns)
-      | (Hash(loc), Search(_)) =>
-        let h = String.sub(pathHead, loc, String.length(pathHead) - loc);
-        let p = String.sub(pathHead, 0, loc);
-        let s = String.sub(patternHead, 1, String.length(patternHead) - 1);
-        Js.Dict.set(params, s, p);
-        remainingIterations(s ++ "=" ++ p, h, params, paths, patterns)
-      }
-    };
-  firstIteration(search, hash, params, paths, patterns)
+  loopPush(path, pattern, [])
 };
 
 /*
@@ -184,8 +114,59 @@ let loopPop = (search, hash, params, paths, patterns) => {
        }
      }
  */
-/* TODO: url isn't used? */
-let parseUrl = (_url, urls, patterns) => loopPop("", "", Js.Dict.empty(), urls, patterns);
+
+/*
+  Pop the pattern and path stack until empty
+    - If the fist pop contains a "#" sub from it to the end and set it as the
+      hash. Disregard from the hash to the end.
+    - Check the pop value from the pattern
+      + if it is a search param then put it in search and match params.
+      + if it is a path then do nothing
+ */
+let parseUrl = (pathsAndPatterns) => {
+  let rec remainingIterations = (search, hash, params, pathsAndPatterns) =>
+    switch pathsAndPatterns {
+    | [] => {search, hash, params}
+    | [(singlePath, singlePattern)] =>
+      switch (hasSearch(singlePattern)) {
+      | NoSearch => remainingIterations("?" ++ search, hash, params, [])
+      | Search(_) =>
+        let s = String.sub(singlePattern, 1, String.length(singlePattern) - 1);
+        Js.Dict.set(params, s, singlePath);
+        remainingIterations("?" ++ s ++ "=" ++ singlePath ++ "&" ++ search, hash, params, [])
+      }
+    | [(pathHead, patternHead), ...rest] =>
+      switch (hasSearch(patternHead)) {
+      | NoSearch => remainingIterations(search, hash, params, rest)
+      | Search(_) =>
+        let s = String.sub(patternHead, 1, String.length(patternHead) - 1);
+        Js.Dict.set(params, s, pathHead);
+        remainingIterations(s ++ "=" ++ pathHead ++ "&" ++ search, hash, params, rest)
+      }
+    };
+  let firstIteration = (search, hash, params, pathsAndPatterns) =>
+    switch pathsAndPatterns {
+    | [] => {search, hash, params}
+    | [(pathHead, patternHead), ...rest] =>
+      switch (hasHash(pathHead), hasSearch(patternHead)) {
+      | (NoHash, NoSearch) => remainingIterations("", "", params, rest)
+      | (NoHash, Search(_)) =>
+        let s = String.sub(patternHead, 1, String.length(patternHead) - 1);
+        Js.Dict.set(params, s, pathHead);
+        remainingIterations(s ++ "=" ++ pathHead, "", params, rest)
+      | (Hash(loc), NoSearch) =>
+        let h = String.sub(pathHead, loc, String.length(pathHead) - loc);
+        remainingIterations("?", h, params, rest)
+      | (Hash(loc), Search(_)) =>
+        let h = String.sub(pathHead, loc, String.length(pathHead) - loc);
+        let p = String.sub(pathHead, 0, loc);
+        let s = String.sub(patternHead, 1, String.length(patternHead) - 1);
+        Js.Dict.set(params, s, p);
+        remainingIterations(s ++ "=" ++ p, h, params, rest)
+      }
+    };
+  firstIteration("", "", Js.Dict.empty(), pathsAndPatterns)
+};
 
 /*
    Generate a Url from a Url Object:
@@ -218,63 +199,47 @@ let parseUrl = (_url, urls, patterns) => loopPop("", "", Js.Dict.empty(), urls, 
      - If compliant recurse with true
      - If not compliant stop and return false
  */
-let isPathCompliant = (paths, patterns) => {
-  let rec remainingIterations = (paths, patterns) =>
-    switch (paths, patterns) {
-    | ([_head, ..._tail], [])
-    | ([], [_head, ..._tail]) =>
-      /* TODO: switch to a data structure that naturally maintains this invariant */
-      raise(
-        Invalid_argument(
-          "isPathCompliant remainingIterations: paths length and patterns length not the same!"
-        )
-      )
-    | ([], []) => true
-    | ([singlePath], [singlePattern]) =>
+let isPathCompliant = (pathsAndPatterns) => {
+  let rec remainingIterations = (pathsAndPatterns) =>
+    switch pathsAndPatterns {
+    | [] => true
+    | [(singlePath, singlePattern)] =>
       switch (hasSearch(singlePattern)) {
       | NoSearch => singlePath == singlePattern
       | Search(_) => true
       }
-    | ([pathHead, ...paths], [patternHead, ...patterns]) =>
+    | [(pathHead, patternHead), ...rest] =>
       switch (hasSearch(patternHead)) {
-      | NoSearch => pathHead == patternHead && remainingIterations(paths, patterns)
-      | Search(_) => remainingIterations(paths, patterns)
+      | NoSearch => pathHead == patternHead && remainingIterations(rest)
+      | Search(_) => remainingIterations(rest)
       }
     };
-  let firstIteration = (paths, patterns) =>
-    switch (paths, patterns) {
-    | ([_head, ..._tail], [])
-    | ([], [_head, ..._tail]) =>
-      /* TODO: switch to a data structure that naturally maintains this invariant */
-      raise(
-        Invalid_argument(
-          "isPathCompliant firstIteration: paths length and patterns length not the same!"
-        )
-      )
-    | ([], []) => true
-    | ([pathHead, ...paths], [patternHead, ...patterns]) =>
+  let firstIteration = (pathsAndPatterns) =>
+    switch pathsAndPatterns {
+    | [] => true
+    | [(pathHead, patternHead), ...rest] =>
       switch (hasHash(pathHead), hasSearch(patternHead)) {
-      | (NoHash, NoSearch) => pathHead == patternHead && remainingIterations(paths, patterns)
-      | (NoHash, Search(_)) => remainingIterations(paths, patterns)
+      | (NoHash, NoSearch) => pathHead == patternHead && remainingIterations(rest)
+      | (NoHash, Search(_)) => remainingIterations(rest)
       | (Hash(loc), NoSearch) =>
-        String.sub(pathHead, 0, loc) == patternHead && remainingIterations(paths, patterns)
-      | (Hash(_), Search(_)) => remainingIterations(paths, patterns)
+        String.sub(pathHead, 0, loc) == patternHead && remainingIterations(rest)
+      | (Hash(_), Search(_)) => remainingIterations(rest)
       }
     };
-  firstIteration(paths, patterns)
+  firstIteration(pathsAndPatterns)
 };
 
 let matchPath = (url, pattern) => {
   let formatUrl = url == "/" ? url : url |> addLeadingSlash |> removeTrailingSlash;
   let formatPattern = pattern == "/" ? pattern : pattern |> addLeadingSlash |> removeTrailingSlash;
   switch (loopPush(formatUrl, formatPattern)) {
-  | Some((u, p)) =>
-    if (isPathCompliant(u, p)) {
-      Some((formatUrl, u, p))
+  | [] => None
+  | pathsAndPatterns =>
+    if (isPathCompliant(pathsAndPatterns)) {
+      Some((formatUrl, pathsAndPatterns))
     } else {
       None
     }
-  | None => None
   }
 };
 

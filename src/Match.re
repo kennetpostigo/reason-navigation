@@ -224,6 +224,8 @@ let rec isPathCompliance = (firstIter, pathStack, patternStack) =>
   | (true, pathStack, patternStack) =>
     let patternItem = List.hd(patternStack);
     let pathItem = List.hd(pathStack);
+    let patternStack = List.tl(patternStack);
+    let pathStack = List.tl(pathStack);
     switch (hasHash(pathItem)) {
     | NoHash =>
       switch (hasSearch(patternItem)) {
@@ -242,6 +244,8 @@ let rec isPathCompliance = (firstIter, pathStack, patternStack) =>
   | (false, pathStack, patternStack) =>
     let patternItem = List.hd(patternStack);
     let pathItem = List.hd(pathStack);
+    let patternStack = List.tl(patternStack);
+    let pathStack = List.tl(pathStack);
     switch (hasSearch(patternItem)) {
     | NoSearch =>
       pathItem == patternItem ?

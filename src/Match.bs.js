@@ -202,8 +202,10 @@ function parseUrl(url, urlStack, patternStack) {
   return loopPop(/* true */1, url, "", "", { }, urlStack, patternStack);
 }
 
-function isPathCompliance(_firstIter, pathStack, patternStack) {
+function isPathCompliance(_firstIter, _pathStack, _patternStack) {
   while(true) {
+    var patternStack = _patternStack;
+    var pathStack = _pathStack;
     var firstIter = _firstIter;
     var exit = 0;
     if (pathStack) {
@@ -217,10 +219,14 @@ function isPathCompliance(_firstIter, pathStack, patternStack) {
       if (firstIter !== 0) {
         var patternItem = List.hd(patternStack);
         var pathItem = List.hd(pathStack);
+        var patternStack$1 = List.tl(patternStack);
+        var pathStack$1 = List.tl(pathStack);
         var match = hasHash(pathItem);
         if (match) {
           var match$1 = hasSearch(patternItem);
           if (match$1) {
+            _patternStack = patternStack$1;
+            _pathStack = pathStack$1;
             _firstIter = /* false */0;
             continue ;
             
@@ -229,6 +235,8 @@ function isPathCompliance(_firstIter, pathStack, patternStack) {
             if (match$2 !== 0) {
               return /* false */0;
             } else {
+              _patternStack = patternStack$1;
+              _pathStack = pathStack$1;
               _firstIter = /* false */0;
               continue ;
               
@@ -237,6 +245,8 @@ function isPathCompliance(_firstIter, pathStack, patternStack) {
         } else {
           var match$3 = hasSearch(patternItem);
           if (match$3) {
+            _patternStack = patternStack$1;
+            _pathStack = pathStack$1;
             _firstIter = /* false */0;
             continue ;
             
@@ -245,6 +255,8 @@ function isPathCompliance(_firstIter, pathStack, patternStack) {
             if (match$4 !== 0) {
               return /* false */0;
             } else {
+              _patternStack = patternStack$1;
+              _pathStack = pathStack$1;
               _firstIter = /* false */0;
               continue ;
               
@@ -254,12 +266,16 @@ function isPathCompliance(_firstIter, pathStack, patternStack) {
       } else {
         var patternItem$1 = List.hd(patternStack);
         var pathItem$1 = List.hd(pathStack);
+        var patternStack$2 = List.tl(patternStack);
+        var pathStack$2 = List.tl(pathStack);
         var match$5 = hasSearch(patternItem$1);
         if (match$5) {
-          var match$6 = +(List.length(pathStack) === 0);
+          var match$6 = +(List.length(pathStack$2) === 0);
           if (match$6 !== 0) {
             return /* true */1;
           } else {
+            _patternStack = patternStack$2;
+            _pathStack = pathStack$2;
             _firstIter = /* false */0;
             continue ;
             
@@ -267,10 +283,12 @@ function isPathCompliance(_firstIter, pathStack, patternStack) {
         } else {
           var match$7 = +(pathItem$1 === patternItem$1);
           if (match$7 !== 0) {
-            var match$8 = +(List.length(pathStack) === 0);
+            var match$8 = +(List.length(pathStack$2) === 0);
             if (match$8 !== 0) {
               return /* true */1;
             } else {
+              _patternStack = patternStack$2;
+              _pathStack = pathStack$2;
               _firstIter = /* false */0;
               continue ;
               

@@ -24,20 +24,13 @@ function getLinkEventData($$event, history, href, target) {
 function make(history, href, $staropt$star, children) {
   var target = $staropt$star ? $staropt$star[0] : "";
   var newrecord = component.slice();
-  newrecord[/* render */9] = (function (self) {
-      var match = +(self[/* state */2] === /* () */0);
-      if (match !== 0) {
-        return React.createElement("a", {
-                    href: href,
-                    onClick: (function (ev) {
-                        return getLinkEventData(ev, history, href, target);
-                      })
-                  }, children);
-      } else {
-        return React.createElement("a", {
-                    href: href
-                  }, children);
-      }
+  newrecord[/* render */9] = (function () {
+      return React.createElement("a", {
+                  href: href,
+                  onClick: (function (ev) {
+                      return getLinkEventData(ev, history, href, target);
+                    })
+                }, children);
     });
   return newrecord;
 }

@@ -41,45 +41,34 @@ function hasHash(url) {
   }
 }
 
-function loopPush(url, pattern) {
-  var _url = url;
+function loopPush(path, pattern) {
+  var _path = path;
   var _pattern = pattern;
-  var _urls = /* [] */0;
-  var _patterns = /* [] */0;
+  var _pathsAndPatterns = /* [] */0;
   while(true) {
-    var patterns = _patterns;
-    var urls = _urls;
+    var pathsAndPatterns = _pathsAndPatterns;
     var pattern$1 = _pattern;
-    var url$1 = _url;
-    if (url$1 === "") {
+    var path$1 = _path;
+    if (path$1 === "") {
       if (pattern$1 === "") {
-        return /* Some */[/* tuple */[
-                  urls,
-                  patterns
-                ]];
+        return pathsAndPatterns;
       } else {
-        return /* None */0;
+        return /* [] */0;
       }
     } else if (pattern$1 === "") {
-      return /* None */0;
+      return /* [] */0;
     } else {
       var match;
-      if ($$String.contains_from(url$1, 1, /* "/" */47)) {
-        var uNextSlash = $$String.index_from(url$1, 1, /* "/" */47);
-        var uItem = $$String.sub(url$1, 1, uNextSlash - 1 | 0);
+      if ($$String.contains_from(path$1, 1, /* "/" */47)) {
+        var uNextSlash = $$String.index_from(path$1, 1, /* "/" */47);
+        var uItem = $$String.sub(path$1, 1, uNextSlash - 1 | 0);
         match = /* tuple */[
-          /* :: */[
-            uItem,
-            urls
-          ],
-          $$String.sub(url$1, uNextSlash, url$1.length - uNextSlash | 0)
+          uItem,
+          $$String.sub(path$1, uNextSlash, path$1.length - uNextSlash | 0)
         ];
       } else {
         match = /* tuple */[
-          /* :: */[
-            $$String.sub(url$1, 1, url$1.length - 1 | 0),
-            urls
-          ],
+          $$String.sub(path$1, 1, path$1.length - 1 | 0),
           ""
         ];
       }
@@ -88,272 +77,158 @@ function loopPush(url, pattern) {
         var pNextSlash = $$String.index_from(pattern$1, 1, /* "/" */47);
         var pItem = $$String.sub(pattern$1, 1, pNextSlash - 1 | 0);
         match$1 = /* tuple */[
-          /* :: */[
-            pItem,
-            patterns
-          ],
+          pItem,
           $$String.sub(pattern$1, pNextSlash, pattern$1.length - pNextSlash | 0)
         ];
       } else {
         match$1 = /* tuple */[
-          /* :: */[
-            $$String.sub(pattern$1, 1, pattern$1.length - 1 | 0),
-            patterns
-          ],
+          $$String.sub(pattern$1, 1, pattern$1.length - 1 | 0),
           ""
         ];
       }
-      _patterns = match$1[0];
-      _urls = match[0];
+      _pathsAndPatterns = /* :: */[
+        /* tuple */[
+          match[0],
+          match$1[0]
+        ],
+        pathsAndPatterns
+      ];
       _pattern = match$1[1];
-      _url = match[1];
+      _path = match[1];
       continue ;
       
     }
   };
 }
 
-function loopPop(_firstIter, _, _search, _hash, params, _paths, _patterns) {
-  while(true) {
-    var patterns = _patterns;
-    var paths = _paths;
-    var hash = _hash;
-    var search = _search;
-    var firstIter = _firstIter;
-    var exit = 0;
-    if (paths) {
-      exit = 1;
-    } else if (patterns) {
-      exit = 1;
-    } else {
-      return /* record */[
-              /* search */search,
-              /* hash */hash,
-              /* params */params
-            ];
-    }
-    if (exit === 1) {
-      var patternItem = List.hd(patterns);
-      var pathItem = List.hd(paths);
-      var patterns$1 = List.tl(patterns);
-      var paths$1 = List.tl(paths);
-      if (firstIter) {
-        var match = hasHash(pathItem);
-        if (match) {
-          var loc = match[0];
-          var match$1 = hasSearch(patternItem);
+function parseUrl(pathsAndPatterns) {
+  var remainingIterations = function (_search, hash, params, _pathsAndPatterns) {
+    while(true) {
+      var pathsAndPatterns = _pathsAndPatterns;
+      var search = _search;
+      if (pathsAndPatterns) {
+        var rest = pathsAndPatterns[1];
+        var match = pathsAndPatterns[0];
+        var patternHead = match[1];
+        var pathHead = match[0];
+        if (rest) {
+          var match$1 = hasSearch(patternHead);
           if (match$1) {
-            var h = $$String.sub(pathItem, loc, pathItem.length - loc | 0);
-            var p = $$String.sub(pathItem, 0, loc);
-            var s = $$String.sub(patternItem, 1, patternItem.length - 1 | 0);
-            params[s] = p;
-            _patterns = patterns$1;
-            _paths = paths$1;
-            _hash = h;
-            _search = s + ("=" + p);
-            _firstIter = /* false */0;
+            var s = $$String.sub(patternHead, 1, patternHead.length - 1 | 0);
+            params[s] = pathHead;
+            _pathsAndPatterns = rest;
+            _search = s + ("=" + (pathHead + ("&" + search)));
             continue ;
             
           } else {
-            var h$1 = $$String.sub(pathItem, loc, pathItem.length - loc | 0);
-            _patterns = patterns$1;
-            _paths = paths$1;
-            _hash = h$1;
-            _search = "?";
-            _firstIter = /* false */0;
+            _pathsAndPatterns = rest;
             continue ;
             
           }
         } else {
-          var match$2 = hasSearch(patternItem);
+          var match$2 = hasSearch(patternHead);
           if (match$2) {
-            var s$1 = $$String.sub(patternItem, 1, patternItem.length - 1 | 0);
-            params[s$1] = pathItem;
-            _patterns = patterns$1;
-            _paths = paths$1;
-            _hash = "";
-            _search = s$1 + ("=" + pathItem);
-            _firstIter = /* false */0;
-            continue ;
-            
+            var s$1 = $$String.sub(patternHead, 1, patternHead.length - 1 | 0);
+            params[s$1] = pathHead;
+            var search$1 = "?" + (s$1 + ("=" + (pathHead + ("&" + search))));
+            return /* record */[
+                    /* search */search$1,
+                    /* hash */hash,
+                    /* params */params
+                  ];
           } else {
-            _patterns = patterns$1;
-            _paths = paths$1;
-            _hash = "";
-            _search = "";
-            _firstIter = /* false */0;
-            continue ;
-            
+            var search$2 = "?" + search;
+            return /* record */[
+                    /* search */search$2,
+                    /* hash */hash,
+                    /* params */params
+                  ];
           }
         }
       } else {
-        var match$3 = hasSearch(patternItem);
-        if (match$3) {
-          var s$2 = $$String.sub(patternItem, 1, patternItem.length - 1 | 0);
-          params[s$2] = pathItem;
-          var match$4 = +(List.length(paths$1) === 0);
-          _patterns = patterns$1;
-          _paths = paths$1;
-          if (match$4 !== 0) {
-            _search = "?" + (s$2 + ("=" + (pathItem + ("&" + search))));
-            _firstIter = /* false */0;
-            continue ;
-            
-          } else {
-            _search = s$2 + ("=" + (pathItem + ("&" + search)));
-            _firstIter = /* false */0;
-            continue ;
-            
-          }
-        } else {
-          var match$5 = +(List.length(paths$1) === 0);
-          _patterns = patterns$1;
-          _paths = paths$1;
-          if (match$5 !== 0) {
-            _search = "?" + search;
-            _firstIter = /* false */0;
-            continue ;
-            
-          } else {
-            _firstIter = /* false */0;
-            continue ;
-            
-          }
-        }
+        return /* record */[
+                /* search */search,
+                /* hash */hash,
+                /* params */params
+              ];
       }
-    }
-    
+    };
   };
-}
-
-function parseUrl(url, urls, patterns) {
-  return loopPop(/* true */1, url, "", "", { }, urls, patterns);
-}
-
-function isPathCompliance(_firstIter, _paths, _patterns) {
-  while(true) {
-    var patterns = _patterns;
-    var paths = _paths;
-    var firstIter = _firstIter;
-    if (paths) {
-      if (patterns) {
-        if (firstIter !== 0) {
-          var patterns$1 = patterns[1];
-          var patternHead = patterns[0];
-          var paths$1 = paths[1];
-          var pathHead = paths[0];
-          var match = hasHash(pathHead);
-          if (match) {
-            var match$1 = hasSearch(patternHead);
-            if (match$1) {
-              _patterns = patterns$1;
-              _paths = paths$1;
-              _firstIter = /* false */0;
-              continue ;
-              
-            } else {
-              var match$2 = +($$String.sub(pathHead, 0, match[0]) !== patternHead);
-              if (match$2 !== 0) {
-                return /* false */0;
-              } else {
-                _patterns = patterns$1;
-                _paths = paths$1;
-                _firstIter = /* false */0;
-                continue ;
-                
-              }
-            }
-          } else {
-            var match$3 = hasSearch(patternHead);
-            if (match$3) {
-              _patterns = patterns$1;
-              _paths = paths$1;
-              _firstIter = /* false */0;
-              continue ;
-              
-            } else {
-              var match$4 = +(pathHead !== patternHead);
-              if (match$4 !== 0) {
-                return /* false */0;
-              } else {
-                _patterns = patterns$1;
-                _paths = paths$1;
-                _firstIter = /* false */0;
-                continue ;
-                
-              }
-            }
-          }
-        } else {
-          var patterns$2 = patterns[1];
-          var patternHead$1 = patterns[0];
-          var paths$2 = paths[1];
-          var match$5 = hasSearch(patternHead$1);
-          if (match$5) {
-            var match$6 = +(List.length(paths$2) === 0);
-            if (match$6 !== 0) {
-              return /* true */1;
-            } else {
-              _patterns = patterns$2;
-              _paths = paths$2;
-              _firstIter = /* false */0;
-              continue ;
-              
-            }
-          } else {
-            var match$7 = +(paths[0] === patternHead$1);
-            if (match$7 !== 0) {
-              var match$8 = +(List.length(paths$2) === 0);
-              if (match$8 !== 0) {
-                return /* true */1;
-              } else {
-                _patterns = patterns$2;
-                _paths = paths$2;
-                _firstIter = /* false */0;
-                continue ;
-                
-              }
-            } else {
-              return /* false */0;
-            }
-          }
-        }
+  var search = "";
+  var hash = "";
+  var params = { };
+  var pathsAndPatterns$1 = pathsAndPatterns;
+  if (pathsAndPatterns$1) {
+    var rest = pathsAndPatterns$1[1];
+    var match = pathsAndPatterns$1[0];
+    var patternHead = match[1];
+    var pathHead = match[0];
+    var match$1 = hasHash(pathHead);
+    var match$2 = hasSearch(patternHead);
+    if (match$1) {
+      var loc = match$1[0];
+      if (match$2) {
+        var h = $$String.sub(pathHead, loc, pathHead.length - loc | 0);
+        var p = $$String.sub(pathHead, 0, loc);
+        var s = $$String.sub(patternHead, 1, patternHead.length - 1 | 0);
+        params[s] = p;
+        return remainingIterations(s + ("=" + p), h, params, rest);
       } else {
-        throw [
-              Caml_builtin_exceptions.invalid_argument,
-              "isPathCompliance: paths length and patterns length not the same!"
-            ];
+        var h$1 = $$String.sub(pathHead, loc, pathHead.length - loc | 0);
+        return remainingIterations("?", h$1, params, rest);
       }
-    } else if (patterns) {
-      throw [
-            Caml_builtin_exceptions.invalid_argument,
-            "isPathCompliance: paths length and patterns length not the same!"
-          ];
+    } else if (match$2) {
+      var s$1 = $$String.sub(patternHead, 1, patternHead.length - 1 | 0);
+      params[s$1] = pathHead;
+      return remainingIterations(s$1 + ("=" + pathHead), "", params, rest);
     } else {
-      return /* true */1;
+      return remainingIterations("", "", params, rest);
     }
-  };
+  } else {
+    return /* record */[
+            /* search */search,
+            /* hash */hash,
+            /* params */params
+          ];
+  }
+}
+
+function isPathCompliant(pathsAndPatterns) {
+  var normalizedPathsAndPatterns;
+  if (pathsAndPatterns) {
+    var match = pathsAndPatterns[0];
+    var path = match[0];
+    var match$1 = hasHash(path);
+    normalizedPathsAndPatterns = match$1 ? /* :: */[
+        /* tuple */[
+          $$String.sub(path, 0, match$1[0]),
+          match[1]
+        ],
+        pathsAndPatterns[1]
+      ] : pathsAndPatterns;
+  } else {
+    normalizedPathsAndPatterns = pathsAndPatterns;
+  }
+  return List.for_all((function (param) {
+                var pattern = param[1];
+                var match = hasSearch(pattern);
+                if (match) {
+                  return /* true */1;
+                } else {
+                  return +(param[0] === pattern);
+                }
+              }), normalizedPathsAndPatterns);
 }
 
 function matchPath(url, pattern) {
-  var match = +(url === "/");
-  var formatUrl = match !== 0 ? url : removeTrailingSlash(addLeadingSlash(url));
-  var match$1 = +(pattern === "/");
-  var formatPattern = match$1 !== 0 ? pattern : removeTrailingSlash(addLeadingSlash(pattern));
-  var match$2 = loopPush(formatUrl, formatPattern);
-  if (match$2) {
-    var match$3 = match$2[0];
-    var p = match$3[1];
-    var u = match$3[0];
-    if (isPathCompliance(/* true */1, u, p)) {
-      return /* Some */[/* tuple */[
-                formatUrl,
-                u,
-                p
-              ]];
-    } else {
-      return /* None */0;
-    }
+  var formatUrl = url === "/" ? url : removeTrailingSlash(addLeadingSlash(url));
+  var formatPattern = pattern === "/" ? pattern : removeTrailingSlash(addLeadingSlash(pattern));
+  var pathsAndPatterns = loopPush(formatUrl, formatPattern);
+  if (pathsAndPatterns && isPathCompliant(pathsAndPatterns)) {
+    return /* Some */[/* tuple */[
+              formatUrl,
+              pathsAndPatterns
+            ]];
   } else {
     return /* None */0;
   }
@@ -399,9 +274,8 @@ exports.addLeadingSlash     = addLeadingSlash;
 exports.hasSearch           = hasSearch;
 exports.hasHash             = hasHash;
 exports.loopPush            = loopPush;
-exports.loopPop             = loopPop;
 exports.parseUrl            = parseUrl;
-exports.isPathCompliance    = isPathCompliance;
+exports.isPathCompliant     = isPathCompliant;
 exports.matchPath           = matchPath;
 exports.getInt              = getInt;
 exports.getString           = getString;

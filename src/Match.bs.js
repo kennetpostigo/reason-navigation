@@ -238,10 +238,10 @@ function isPathCompliance(_firstIter, _paths, _patterns) {
     if (paths) {
       if (patterns) {
         if (firstIter !== 0) {
-          var paths$1 = patterns[1];
-          var pathHead = patterns[0];
-          var patterns$1 = paths[1];
-          var patternHead = paths[0];
+          var patterns$1 = patterns[1];
+          var patternHead = patterns[0];
+          var paths$1 = paths[1];
+          var pathHead = paths[0];
           var match = hasHash(pathHead);
           if (match) {
             var match$1 = hasSearch(patternHead);

@@ -229,7 +229,7 @@ let rec isPathCompliance = (firstIter, paths, patterns) =>
     /* TODO: switch to a data structure that naturally maintains this invariant */
     raise(Invalid_argument("isPathCompliance: paths length and patterns length not the same!"))
   | (_, [], []) => true
-  | (true, [patternHead, ...patterns], [pathHead, ...paths]) =>
+  | (true, [pathHead, ...paths], [patternHead, ...patterns]) =>
     switch (hasHash(pathHead)) {
     | NoHash =>
       switch (hasSearch(patternHead)) {

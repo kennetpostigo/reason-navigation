@@ -114,68 +114,64 @@ let loopPush = (url, pattern) => {
       + if it is a search param then put it in search and match params.
       + if it is a path then do nothing
  */
-let rec loopPop = (firstIter, path, search, hash, params, paths, patterns) =>
-  switch (paths, patterns) {
-  | ([], []) => {search, hash, params}
-  | (paths, patterns) =>
-    let patternItem = List.hd(patterns);
-    let pathItem = List.hd(paths);
-    let patterns = List.tl(patterns);
-    let paths = List.tl(paths);
-    if (firstIter) {
-      switch (hasHash(pathItem)) {
-      | NoHash =>
-        switch (hasSearch(patternItem)) {
-        | NoSearch => loopPop(false, path, "", "", params, paths, patterns)
-        | Search(_) =>
-          let s = String.sub(patternItem, 1, String.length(patternItem) - 1);
-          Js.Dict.set(params, s, pathItem);
-          loopPop(false, path, s ++ "=" ++ pathItem, "", params, paths, patterns)
-        }
-      | Hash(loc) =>
-        switch (hasSearch(patternItem)) {
-        | NoSearch =>
-          let h = String.sub(pathItem, loc, String.length(pathItem) - loc);
-          loopPop(false, path, "?", h, params, paths, patterns)
-        | Search(_) =>
-          let h = String.sub(pathItem, loc, String.length(pathItem) - loc);
-          let p = String.sub(pathItem, 0, loc);
-          let s = String.sub(patternItem, 1, String.length(patternItem) - 1);
-          Js.Dict.set(params, s, p);
-          loopPop(false, path, s ++ "=" ++ p, h, params, paths, patterns)
-        }
-      }
-    } else {
-      switch (hasSearch(patternItem)) {
-      | NoSearch =>
-        List.length(paths) == 0 ?
-          loopPop(false, path, "?" ++ search, hash, params, paths, patterns) :
-          loopPop(false, path, search, hash, params, paths, patterns)
+let loopPop = (search, hash, params, paths, patterns) => {
+  let rec remainingIterations = (search, hash, params, paths, patterns) =>
+    switch (paths, patterns) {
+    | ([_head, ..._tail], [])
+    | ([], [_head, ..._tail]) =>
+      /* TODO: switch to a data structure that naturally maintains this invariant */
+      raise(
+        Invalid_argument(
+          "loopPop remainingIterations: paths length and patterns length not the same!"
+        )
+      )
+    | ([], []) => {search, hash, params}
+    | ([singlePath], [singlePattern]) =>
+      switch (hasSearch(singlePattern)) {
+      | NoSearch => remainingIterations("?" ++ search, hash, params, [], [])
       | Search(_) =>
-        let s = String.sub(patternItem, 1, String.length(patternItem) - 1);
-        Js.Dict.set(params, s, pathItem);
-        List.length(paths) == 0 ?
-          loopPop(
-            false,
-            path,
-            "?" ++ s ++ "=" ++ pathItem ++ "&" ++ search,
-            hash,
-            params,
-            paths,
-            patterns
-          ) :
-          loopPop(
-            false,
-            path,
-            s ++ "=" ++ pathItem ++ "&" ++ search,
-            hash,
-            params,
-            paths,
-            patterns
-          )
+        let s = String.sub(singlePattern, 1, String.length(singlePattern) - 1);
+        Js.Dict.set(params, s, singlePath);
+        remainingIterations("?" ++ s ++ "=" ++ singlePath ++ "&" ++ search, hash, params, [], [])
       }
-    }
-  };
+    | ([pathHead, ...paths], [patternHead, ...patterns]) =>
+      switch (hasSearch(patternHead)) {
+      | NoSearch => remainingIterations(search, hash, params, paths, patterns)
+      | Search(_) =>
+        let s = String.sub(patternHead, 1, String.length(patternHead) - 1);
+        Js.Dict.set(params, s, pathHead);
+        remainingIterations(s ++ "=" ++ pathHead ++ "&" ++ search, hash, params, paths, patterns)
+      }
+    };
+  let firstIteration = (search, hash, params, paths, patterns) =>
+    switch (paths, patterns) {
+    | ([_head, ..._tail], [])
+    | ([], [_head, ..._tail]) =>
+      /* TODO: switch to a data structure that naturally maintains this invariant */
+      raise(
+        Invalid_argument("loopPop firstIteration: paths length and patterns length not the same!")
+      )
+    | ([], []) => {search, hash, params}
+    | ([pathHead, ...paths], [patternHead, ...patterns]) =>
+      switch (hasHash(pathHead), hasSearch(patternHead)) {
+      | (NoHash, NoSearch) => remainingIterations("", "", params, paths, patterns)
+      | (NoHash, Search(_)) =>
+        let s = String.sub(patternHead, 1, String.length(patternHead) - 1);
+        Js.Dict.set(params, s, pathHead);
+        remainingIterations(s ++ "=" ++ pathHead, "", params, paths, patterns)
+      | (Hash(loc), NoSearch) =>
+        let h = String.sub(pathHead, loc, String.length(pathHead) - loc);
+        remainingIterations("?", h, params, paths, patterns)
+      | (Hash(loc), Search(_)) =>
+        let h = String.sub(pathHead, loc, String.length(pathHead) - loc);
+        let p = String.sub(pathHead, 0, loc);
+        let s = String.sub(patternHead, 1, String.length(patternHead) - 1);
+        Js.Dict.set(params, s, p);
+        remainingIterations(s ++ "=" ++ p, h, params, paths, patterns)
+      }
+    };
+  firstIteration(search, hash, params, paths, patterns)
+};
 
 /*
    Generate a Url Object from a Url:
@@ -188,8 +184,8 @@ let rec loopPop = (firstIter, path, search, hash, params, paths, patterns) =>
        }
      }
  */
-let parseUrl = (url, urls, patterns) =>
-  loopPop(true, url, "", "", Js.Dict.empty(), urls, patterns);
+/* TODO: url isn't used? */
+let parseUrl = (_url, urls, patterns) => loopPop("", "", Js.Dict.empty(), urls, patterns);
 
 /*
    Generate a Url from a Url Object:
@@ -234,9 +230,9 @@ let isPathCompliant = (paths, patterns) => {
         )
       )
     | ([], []) => true
-    | ([singlePath], [patternHead]) =>
-      switch (hasSearch(patternHead)) {
-      | NoSearch => singlePath == patternHead
+    | ([singlePath], [singlePattern]) =>
+      switch (hasSearch(singlePattern)) {
+      | NoSearch => singlePath == singlePattern
       | Search(_) => true
       }
     | ([pathHead, ...paths], [patternHead, ...patterns]) =>
@@ -258,8 +254,7 @@ let isPathCompliant = (paths, patterns) => {
     | ([], []) => true
     | ([pathHead, ...paths], [patternHead, ...patterns]) =>
       switch (hasHash(pathHead), hasSearch(patternHead)) {
-      | (NoHash, NoSearch) =>
-        pathHead == patternHead && remainingIterations(paths, patterns)
+      | (NoHash, NoSearch) => pathHead == patternHead && remainingIterations(paths, patterns)
       | (NoHash, Search(_)) => remainingIterations(paths, patterns)
       | (Hash(loc), NoSearch) =>
         String.sub(pathHead, 0, loc) == patternHead && remainingIterations(paths, patterns)

@@ -222,43 +222,59 @@ let parseUrl = (url, urls, patterns) =>
      - If compliant recurse with true
      - If not compliant stop and return false
  */
-let rec isPathCompliance = (firstIter, paths, patterns) =>
-  switch (firstIter, paths, patterns) {
-  | (_, [_head, ..._tail], [])
-  | (_, [], [_head, ..._tail]) =>
-    /* TODO: switch to a data structure that naturally maintains this invariant */
-    raise(Invalid_argument("isPathCompliance: paths length and patterns length not the same!"))
-  | (_, [], []) => true
-  | (true, [pathHead, ...paths], [patternHead, ...patterns]) =>
-    switch (hasHash(pathHead)) {
-    | NoHash =>
+let isPathCompliant = (paths, patterns) => {
+  let rec remainingIterations = (paths, patterns) =>
+    switch (paths, patterns) {
+    | ([_head, ..._tail], [])
+    | ([], [_head, ..._tail]) =>
+      /* TODO: switch to a data structure that naturally maintains this invariant */
+      raise(
+        Invalid_argument(
+          "isPathCompliant remainingIterations: paths length and patterns length not the same!"
+        )
+      )
+    | ([], []) => true
+    | ([singlePath], [patternHead]) =>
       switch (hasSearch(patternHead)) {
-      | NoSearch => pathHead != patternHead ? false : isPathCompliance(false, paths, patterns)
-      | Search(_) => isPathCompliance(false, paths, patterns)
+      | NoSearch => singlePath == patternHead
+      | Search(_) => true
       }
-    | Hash(loc) =>
+    | ([pathHead, ...paths], [patternHead, ...patterns]) =>
       switch (hasSearch(patternHead)) {
-      | NoSearch =>
-        String.sub(pathHead, 0, loc) != patternHead ?
-          false : isPathCompliance(false, paths, patterns)
-      | Search(_) => isPathCompliance(false, paths, patterns)
+      | NoSearch => pathHead == patternHead && remainingIterations(paths, patterns)
+      | Search(_) => remainingIterations(paths, patterns)
       }
-    }
-  | (false, [pathHead, ...paths], [patternHead, ...patterns]) =>
-    switch (hasSearch(patternHead)) {
-    | NoSearch =>
-      pathHead == patternHead ?
-        List.length(paths) == 0 ? true : isPathCompliance(false, paths, patterns) : false
-    | Search(_) => List.length(paths) == 0 ? true : isPathCompliance(false, paths, patterns)
-    }
-  };
+    };
+  let firstIteration = (paths, patterns) =>
+    switch (paths, patterns) {
+    | ([_head, ..._tail], [])
+    | ([], [_head, ..._tail]) =>
+      /* TODO: switch to a data structure that naturally maintains this invariant */
+      raise(
+        Invalid_argument(
+          "isPathCompliant firstIteration: paths length and patterns length not the same!"
+        )
+      )
+    | ([], []) => true
+    | ([pathHead, ...paths], [patternHead, ...patterns]) =>
+      switch (hasHash(pathHead), hasSearch(patternHead)) {
+      | (NoHash, NoSearch) =>
+        pathHead == patternHead && remainingIterations(paths, patterns)
+      | (NoHash, Search(_)) => remainingIterations(paths, patterns)
+      | (Hash(loc), NoSearch) =>
+        String.sub(pathHead, 0, loc) == patternHead && remainingIterations(paths, patterns)
+      | (Hash(_), Search(_)) => remainingIterations(paths, patterns)
+      }
+    };
+  firstIteration(paths, patterns)
+};
 
 let matchPath = (url, pattern) => {
   let formatUrl = url == "/" ? url : url |> addLeadingSlash |> removeTrailingSlash;
   let formatPattern = pattern == "/" ? pattern : pattern |> addLeadingSlash |> removeTrailingSlash;
   switch (loopPush(formatUrl, formatPattern)) {
   | Some((u, p)) =>
-    if (isPathCompliance(true, u, p)) {
+    if (isPathCompliant(u, p)) {
       Some((formatUrl, u, p))
     } else {
       None

@@ -101,8 +101,10 @@ function loopPush(url, pattern) {
   };
 }
 
-function loopPop(_firstIter, _, _search, _hash, params, pathStack, patternStack) {
+function loopPop(_firstIter, _, _search, _hash, params, _pathStack, _patternStack) {
   while(true) {
+    var patternStack = _patternStack;
+    var pathStack = _pathStack;
     var hash = _hash;
     var search = _search;
     var firstIter = _firstIter;
@@ -121,6 +123,8 @@ function loopPop(_firstIter, _, _search, _hash, params, pathStack, patternStack)
     if (exit === 1) {
       var patternItem = List.hd(patternStack);
       var pathItem = List.hd(pathStack);
+      var patternStack$1 = List.tl(patternStack);
+      var pathStack$1 = List.tl(pathStack);
       if (firstIter) {
         var match = hasHash(pathItem);
         if (match) {
@@ -131,6 +135,8 @@ function loopPop(_firstIter, _, _search, _hash, params, pathStack, patternStack)
             var p = $$String.sub(pathItem, 0, loc);
             var s = $$String.sub(patternItem, 1, patternItem.length - 1 | 0);
             params[s] = p;
+            _patternStack = patternStack$1;
+            _pathStack = pathStack$1;
             _hash = h;
             _search = s + ("=" + p);
             _firstIter = /* false */0;
@@ -138,6 +144,8 @@ function loopPop(_firstIter, _, _search, _hash, params, pathStack, patternStack)
             
           } else {
             var h$1 = $$String.sub(pathItem, loc, pathItem.length - loc | 0);
+            _patternStack = patternStack$1;
+            _pathStack = pathStack$1;
             _hash = h$1;
             _search = "?";
             _firstIter = /* false */0;
@@ -149,12 +157,16 @@ function loopPop(_firstIter, _, _search, _hash, params, pathStack, patternStack)
           if (match$2) {
             var s$1 = $$String.sub(patternItem, 1, patternItem.length - 1 | 0);
             params[s$1] = pathItem;
+            _patternStack = patternStack$1;
+            _pathStack = pathStack$1;
             _hash = "";
             _search = s$1 + ("=" + pathItem);
             _firstIter = /* false */0;
             continue ;
             
           } else {
+            _patternStack = patternStack$1;
+            _pathStack = pathStack$1;
             _hash = "";
             _search = "";
             _firstIter = /* false */0;
@@ -167,7 +179,9 @@ function loopPop(_firstIter, _, _search, _hash, params, pathStack, patternStack)
         if (match$3) {
           var s$2 = $$String.sub(patternItem, 1, patternItem.length - 1 | 0);
           params[s$2] = pathItem;
-          var match$4 = +(List.length(pathStack) === 0);
+          var match$4 = +(List.length(pathStack$1) === 0);
+          _patternStack = patternStack$1;
+          _pathStack = pathStack$1;
           if (match$4 !== 0) {
             _search = "?" + (s$2 + ("=" + (pathItem + ("&" + search))));
             _firstIter = /* false */0;
@@ -180,7 +194,9 @@ function loopPop(_firstIter, _, _search, _hash, params, pathStack, patternStack)
             
           }
         } else {
-          var match$5 = +(List.length(pathStack) === 0);
+          var match$5 = +(List.length(pathStack$1) === 0);
+          _patternStack = patternStack$1;
+          _pathStack = pathStack$1;
           if (match$5 !== 0) {
             _search = "?" + search;
             _firstIter = /* false */0;

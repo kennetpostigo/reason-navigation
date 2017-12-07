@@ -118,6 +118,8 @@ let rec loopPop = (firstIter, path, search, hash, params, pathStack, patternStac
   | (pathStack, patternStack) =>
     let patternItem = List.hd(patternStack);
     let pathItem = List.hd(pathStack);
+    let patternStack = List.tl(patternStack);
+    let pathStack = List.tl(pathStack);
     if (firstIter) {
       switch (hasHash(pathItem)) {
       | NoHash =>

@@ -11,12 +11,9 @@ let make = (~history: Router.history, ~path, ~render, _children) => {
     };
     ReasonReact.NoUpdate
   },
-  render: (_) => {
-    let match =
-      switch (Match.matchPath(history.state.path, path)) {
-      | Some(_) => true
-      | None => false
-      };
-    match ? render() : ReasonReact.nullElement
-  }
+  render: (_) =>
+    switch (Match.matchPath(history.state.path, path)) {
+    | Some(_) => render()
+    | None => ReasonReact.nullElement
+    }
 };

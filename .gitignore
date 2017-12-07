@@ -2,7 +2,6 @@
 /node_modules*
 finalOutput/*.js
 .merlin
-/lib/bs/
-/lib/ocaml/
+/lib/
 *.log
 .bsb.lock

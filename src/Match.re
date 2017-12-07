@@ -39,23 +39,21 @@ type hash =
   | Hash(int)
   | NoHash;
 
+/* TODO: this throws */
 let removeTrailingSlash = (url) => {
   let lastChar = url.[String.length(url) - 1];
-  if (lastChar == '/') {
-    String.sub(url, 0, String.length(url) - 1)
-  } else {
-    url
+  switch lastChar {
+  | '/' => String.sub(url, 0, String.length(url) - 1)
+  | _ => url
   }
 };
 
-let addLeadingSlash = (url) => {
-  let firstChar = url.[0];
-  if (firstChar == '/') {
-    url
-  } else {
-    "/" ++ url
-  }
-};
+/* TODO: this throws */
+let addLeadingSlash = (url) =>
+  switch url.[0] {
+  | '/' => url
+  | _ => "/" ++ url
+  };
 
 let hasSearch = (url) =>
   if (String.contains(url, ':')) {
@@ -76,34 +74,34 @@ let hasHash = (url) =>
     - push the path into a path stack
     - push the pattern into a pattern stack
  */
+/* TODO: this throws because of string ops */
+/* TODO: inline loopPush? */
 let rec loopPush = (url, pattern, urlStack, patternStack) =>
-  if (url == "" && pattern == "") {
-    Some((urlStack, patternStack))
-  } else {
-    switch (String.length(url) == 0, String.length(pattern) == 0) {
-    | (true, false)
-    | (false, true) => None
-    | (true, true) => Some((urlStack, patternStack))
-    | (false, false) =>
-      let uNextSlash = String.contains_from(url, 1, '/') ? String.index_from(url, 1, '/') : (-1);
-      let pNextSlash =
-        String.contains_from(pattern, 1, '/') ? String.index_from(pattern, 1, '/') : (-1);
-      let uItem = uNextSlash == (-1) ? "" : String.sub(url, 1, uNextSlash - 1);
-      let pItem = pNextSlash == (-1) ? "" : String.sub(pattern, 1, pNextSlash - 1);
-      uNextSlash == (-1) ?
-        Stack.push(String.sub(url, 1, String.length(url) - 1), urlStack) :
-        Stack.push(uItem, urlStack);
+  switch (url, pattern) {
+  | ("", "") => Some((urlStack, patternStack))
+  | ("", _)
+  | (_, "") => None
+  | (url, pattern) =>
+    let uNextSlash = String.contains_from(url, 1, '/') ? String.index_from(url, 1, '/') : (-1);
+    let pNextSlash =
+      String.contains_from(pattern, 1, '/') ? String.index_from(pattern, 1, '/') : (-1);
+    let uItem = uNextSlash == (-1) ? "" : String.sub(url, 1, uNextSlash - 1);
+    let pItem = pNextSlash == (-1) ? "" : String.sub(pattern, 1, pNextSlash - 1);
+    uNextSlash == (-1) ?
+      Stack.push(String.sub(url, 1, String.length(url) - 1), urlStack) :
+      Stack.push(uItem, urlStack);
+    pNextSlash == (-1) ?
+      Stack.push(String.sub(pattern, 1, String.length(pattern) - 1), patternStack) :
+      Stack.push(pItem, patternStack);
+    let nextUrl =
+      uNextSlash == (-1) ? "" : String.sub(url, uNextSlash, String.length(url) - uNextSlash);
+    let nextPattern =
       pNextSlash == (-1) ?
-        Stack.push(String.sub(pattern, 1, String.length(pattern) - 1), patternStack) :
-        Stack.push(pItem, patternStack);
-      let nextUrl =
-        uNextSlash == (-1) ? "" : String.sub(url, uNextSlash, String.length(url) - uNextSlash);
-      let nextPattern =
-        pNextSlash == (-1) ?
-          "" : String.sub(pattern, pNextSlash, String.length(pattern) - pNextSlash);
-      loopPush(nextUrl, nextPattern, urlStack, patternStack)
-    }
+        "" : String.sub(pattern, pNextSlash, String.length(pattern) - pNextSlash);
+    loopPush(nextUrl, nextPattern, urlStack, patternStack)
   };
+
+let loopPush = (url, pattern) => loopPush(url, pattern, Stack.create(), Stack.create());
 
 /*
   Pop the pattern and path stack until empty
@@ -256,7 +254,7 @@ let rec isPathCompliance = (firstIter, pathStack, patternStack) =>
 let matchPath = (url, pattern) => {
   let formatUrl = url == "/" ? url : url |> addLeadingSlash |> removeTrailingSlash;
   let formatPattern = pattern == "/" ? pattern : pattern |> addLeadingSlash |> removeTrailingSlash;
-  let stackify = loopPush(formatUrl, formatPattern, Stack.create(), Stack.create());
+  let stackify = loopPush(formatUrl, formatPattern);
   switch stackify {
   | Some((u, p)) =>
     let uCopy = Stack.copy(u);

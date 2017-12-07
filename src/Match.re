@@ -126,13 +126,13 @@ let parseUrl = (pathsAndPatterns) => {
   let rec remainingIterations = (search, hash, params, pathsAndPatterns) =>
     switch pathsAndPatterns {
     | [] => {search, hash, params}
-    | [(singlePath, singlePattern)] =>
-      switch (hasSearch(singlePattern)) {
+    | [(pathHead, patternHead)] =>
+      switch (hasSearch(patternHead)) {
       | NoSearch => remainingIterations("?" ++ search, hash, params, [])
       | Search(_) =>
-        let s = String.sub(singlePattern, 1, String.length(singlePattern) - 1);
-        Js.Dict.set(params, s, singlePath);
-        remainingIterations("?" ++ s ++ "=" ++ singlePath ++ "&" ++ search, hash, params, [])
+        let s = String.sub(patternHead, 1, String.length(patternHead) - 1);
+        Js.Dict.set(params, s, pathHead);
+        remainingIterations("?" ++ s ++ "=" ++ pathHead ++ "&" ++ search, hash, params, [])
       }
     | [(pathHead, patternHead), ...rest] =>
       switch (hasSearch(patternHead)) {
@@ -199,31 +199,23 @@ let parseUrl = (pathsAndPatterns) => {
      - If not compliant stop and return false
  */
 let isPathCompliant = (pathsAndPatterns) => {
-  let rec remainingIterations =
-    fun
-    | [] => true
-    | [(pathHead, patternHead)] =>
-      switch (hasSearch(patternHead)) {
-      | NoSearch => pathHead == patternHead
-      | Search(_) => true
+  let normalizedPathsAndPatterns =
+    switch pathsAndPatterns {
+    | [(path, pattern), ...rest] =>
+      switch (hasHash(path)) {
+      | NoHash => pathsAndPatterns
+      | Hash(loc) => [(String.sub(path, 0, loc), pattern), ...rest]
       }
-    | [(pathHead, patternHead), ...rest] =>
-      switch (hasSearch(patternHead)) {
-      | NoSearch => pathHead == patternHead && remainingIterations(rest)
-      | Search(_) => remainingIterations(rest)
-      };
-  let firstIteration =
-    fun
-    | [] => true
-    | [(pathHead, patternHead), ...rest] =>
-      switch (hasHash(pathHead), hasSearch(patternHead)) {
-      | (NoHash, NoSearch) => pathHead == patternHead && remainingIterations(rest)
-      | (NoHash, Search(_)) => remainingIterations(rest)
-      | (Hash(loc), NoSearch) =>
-        String.sub(pathHead, 0, loc) == patternHead && remainingIterations(rest)
-      | (Hash(_), Search(_)) => remainingIterations(rest)
-      };
-  firstIteration(pathsAndPatterns)
+    | _ => pathsAndPatterns
+    };
+  normalizedPathsAndPatterns
+  |> List.for_all(
+       ((path, pattern)) =>
+         switch (hasSearch(pattern)) {
+         | NoSearch => path == pattern
+         | Search(_) => true
+         }
+     )
 };
 
 let matchPath = (url, pattern) => {

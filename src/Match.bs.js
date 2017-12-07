@@ -1,5 +1,6 @@
 'use strict';
 
+var List                    = require("bs-platform/lib/js/list.js");
 var Js_exn                  = require("bs-platform/lib/js/js_exn.js");
 var $$String                = require("bs-platform/lib/js/string.js");
 var Caml_format             = require("bs-platform/lib/js/caml_format.js");
@@ -108,15 +109,15 @@ function parseUrl(pathsAndPatterns) {
       if (pathsAndPatterns) {
         var rest = pathsAndPatterns[1];
         var match = pathsAndPatterns[0];
-        var singlePattern = match[1];
-        var singlePath = match[0];
+        var patternHead = match[1];
+        var pathHead = match[0];
         if (rest) {
-          var match$1 = hasSearch(singlePattern);
+          var match$1 = hasSearch(patternHead);
           if (match$1) {
-            var s = $$String.sub(singlePattern, 1, singlePattern.length - 1 | 0);
-            params[s] = singlePath;
+            var s = $$String.sub(patternHead, 1, patternHead.length - 1 | 0);
+            params[s] = pathHead;
             _pathsAndPatterns = rest;
-            _search = s + ("=" + (singlePath + ("&" + search)));
+            _search = s + ("=" + (pathHead + ("&" + search)));
             continue ;
             
           } else {
@@ -125,11 +126,11 @@ function parseUrl(pathsAndPatterns) {
             
           }
         } else {
-          var match$2 = hasSearch(singlePattern);
+          var match$2 = hasSearch(patternHead);
           if (match$2) {
-            var s$1 = $$String.sub(singlePattern, 1, singlePattern.length - 1 | 0);
-            params[s$1] = singlePath;
-            var search$1 = "?" + (s$1 + ("=" + (singlePath + ("&" + search))));
+            var s$1 = $$String.sub(patternHead, 1, patternHead.length - 1 | 0);
+            params[s$1] = pathHead;
+            var search$1 = "?" + (s$1 + ("=" + (pathHead + ("&" + search))));
             return /* record */[
                     /* search */search$1,
                     /* hash */hash,
@@ -193,62 +194,30 @@ function parseUrl(pathsAndPatterns) {
 }
 
 function isPathCompliant(pathsAndPatterns) {
-  var remainingIterations = function (_param) {
-    while(true) {
-      var param = _param;
-      if (param) {
-        var rest = param[1];
-        var match = param[0];
-        var patternHead = match[1];
-        var pathHead = match[0];
-        if (rest) {
-          var match$1 = hasSearch(patternHead);
-          if (match$1) {
-            _param = rest;
-            continue ;
-            
-          } else if (pathHead === patternHead) {
-            _param = rest;
-            continue ;
-            
-          } else {
-            return /* false */0;
-          }
-        } else {
-          var match$2 = hasSearch(patternHead);
-          if (match$2) {
-            return /* true */1;
-          } else {
-            return +(pathHead === patternHead);
-          }
-        }
-      } else {
-        return /* true */1;
-      }
-    };
-  };
-  var param = pathsAndPatterns;
-  if (param) {
-    var rest = param[1];
-    var match = param[0];
-    var patternHead = match[1];
-    var pathHead = match[0];
-    var match$1 = hasHash(pathHead);
-    var match$2 = hasSearch(patternHead);
-    if (match$1) {
-      if (match$2 || $$String.sub(pathHead, 0, match$1[0]) === patternHead) {
-        return remainingIterations(rest);
-      } else {
-        return /* false */0;
-      }
-    } else if (match$2 || pathHead === patternHead) {
-      return remainingIterations(rest);
-    } else {
-      return /* false */0;
-    }
+  var normalizedPathsAndPatterns;
+  if (pathsAndPatterns) {
+    var match = pathsAndPatterns[0];
+    var path = match[0];
+    var match$1 = hasHash(path);
+    normalizedPathsAndPatterns = match$1 ? /* :: */[
+        /* tuple */[
+          $$String.sub(path, 0, match$1[0]),
+          match[1]
+        ],
+        pathsAndPatterns[1]
+      ] : pathsAndPatterns;
   } else {
-    return /* true */1;
+    normalizedPathsAndPatterns = pathsAndPatterns;
   }
+  return List.for_all((function (param) {
+                var pattern = param[1];
+                var match = hasSearch(pattern);
+                if (match) {
+                  return /* true */1;
+                } else {
+                  return +(param[0] === pattern);
+                }
+              }), normalizedPathsAndPatterns);
 }
 
 function matchPath(url, pattern) {

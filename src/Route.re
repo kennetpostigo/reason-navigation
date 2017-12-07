@@ -4,8 +4,8 @@ let make = (~history: Router.history, ~path, ~render, _children) => {
   ...component,
   didMount: (_) => {
     switch (Match.matchPath(history.state.path, path)) {
-    | Some((url, urlStack, patternStack)) =>
-      let {search, hash, params}: Match.t = Match.parseUrl(url, urlStack, patternStack);
+    | Some((url, urls, patterns)) =>
+      let {search, hash, params}: Match.t = Match.parseUrl(url, urls, patterns);
       history.actions.updateMatch(search, hash, params)
     | None => ()
     };

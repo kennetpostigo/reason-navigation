@@ -1,6 +1,6 @@
 'use strict';
 
-var Stack                   = require("bs-platform/lib/js/stack.js");
+var List                    = require("bs-platform/lib/js/list.js");
 var Js_exn                  = require("bs-platform/lib/js/js_exn.js");
 var $$String                = require("bs-platform/lib/js/string.js");
 var Caml_format             = require("bs-platform/lib/js/caml_format.js");
@@ -44,9 +44,11 @@ function hasHash(url) {
 function loopPush(url, pattern) {
   var _url = url;
   var _pattern = pattern;
-  var urlStack = Stack.create(/* () */0);
-  var patternStack = Stack.create(/* () */0);
+  var _urlStack = /* [] */0;
+  var _patternStack = /* [] */0;
   while(true) {
+    var patternStack = _patternStack;
+    var urlStack = _urlStack;
     var pattern$1 = _pattern;
     var url$1 = _url;
     if (url$1 === "") {
@@ -70,21 +72,27 @@ function loopPush(url, pattern) {
       var match$3 = +(pNextSlash === -1);
       var pItem = match$3 !== 0 ? "" : $$String.sub(pattern$1, 1, pNextSlash - 1 | 0);
       var match$4 = +(uNextSlash === -1);
-      if (match$4 !== 0) {
-        Stack.push($$String.sub(url$1, 1, url$1.length - 1 | 0), urlStack);
-      } else {
-        Stack.push(uItem, urlStack);
-      }
+      var newUrlStack = match$4 !== 0 ? /* :: */[
+          $$String.sub(url$1, 1, url$1.length - 1 | 0),
+          urlStack
+        ] : /* :: */[
+          uItem,
+          urlStack
+        ];
       var match$5 = +(pNextSlash === -1);
-      if (match$5 !== 0) {
-        Stack.push($$String.sub(pattern$1, 1, pattern$1.length - 1 | 0), patternStack);
-      } else {
-        Stack.push(pItem, patternStack);
-      }
+      var newPatternStack = match$5 !== 0 ? /* :: */[
+          $$String.sub(pattern$1, 1, pattern$1.length - 1 | 0),
+          patternStack
+        ] : /* :: */[
+          pItem,
+          patternStack
+        ];
       var match$6 = +(uNextSlash === -1);
       var nextUrl = match$6 !== 0 ? "" : $$String.sub(url$1, uNextSlash, url$1.length - uNextSlash | 0);
       var match$7 = +(pNextSlash === -1);
       var nextPattern = match$7 !== 0 ? "" : $$String.sub(pattern$1, pNextSlash, pattern$1.length - pNextSlash | 0);
+      _patternStack = newPatternStack;
+      _urlStack = newUrlStack;
       _pattern = nextPattern;
       _url = nextUrl;
       continue ;
@@ -98,15 +106,21 @@ function loopPop(_firstIter, _, _search, _hash, params, pathStack, patternStack)
     var hash = _hash;
     var search = _search;
     var firstIter = _firstIter;
-    if (Stack.is_empty(pathStack) && Stack.is_empty(patternStack)) {
+    var exit = 0;
+    if (pathStack) {
+      exit = 1;
+    } else if (patternStack) {
+      exit = 1;
+    } else {
       return /* record */[
               /* search */search,
               /* hash */hash,
               /* params */params
             ];
-    } else {
-      var patternItem = Stack.pop(patternStack);
-      var pathItem = Stack.pop(pathStack);
+    }
+    if (exit === 1) {
+      var patternItem = List.hd(patternStack);
+      var pathItem = List.hd(pathStack);
       if (firstIter) {
         var match = hasHash(pathItem);
         if (match) {
@@ -153,7 +167,7 @@ function loopPop(_firstIter, _, _search, _hash, params, pathStack, patternStack)
         if (match$3) {
           var s$2 = $$String.sub(patternItem, 1, patternItem.length - 1 | 0);
           params[s$2] = pathItem;
-          var match$4 = +(Stack.length(pathStack) === 0);
+          var match$4 = +(List.length(pathStack) === 0);
           if (match$4 !== 0) {
             _search = "?" + (s$2 + ("=" + (pathItem + ("&" + search))));
             _firstIter = /* false */0;
@@ -166,7 +180,7 @@ function loopPop(_firstIter, _, _search, _hash, params, pathStack, patternStack)
             
           }
         } else {
-          var match$5 = +(Stack.length(pathStack) === 0);
+          var match$5 = +(List.length(pathStack) === 0);
           if (match$5 !== 0) {
             _search = "?" + search;
             _firstIter = /* false */0;
@@ -180,6 +194,7 @@ function loopPop(_firstIter, _, _search, _hash, params, pathStack, patternStack)
         }
       }
     }
+    
   };
 }
 
@@ -190,12 +205,18 @@ function parseUrl(url, urlStack, patternStack) {
 function isPathCompliance(_firstIter, pathStack, patternStack) {
   while(true) {
     var firstIter = _firstIter;
-    if (Stack.is_empty(pathStack) && Stack.is_empty(patternStack)) {
-      return /* true */1;
+    var exit = 0;
+    if (pathStack) {
+      exit = 1;
+    } else if (patternStack) {
+      exit = 1;
     } else {
-      var patternItem = Stack.pop(patternStack);
-      var pathItem = Stack.pop(pathStack);
-      if (firstIter) {
+      return /* true */1;
+    }
+    if (exit === 1) {
+      if (firstIter !== 0) {
+        var patternItem = List.hd(patternStack);
+        var pathItem = List.hd(pathStack);
         var match = hasHash(pathItem);
         if (match) {
           var match$1 = hasSearch(patternItem);
@@ -231,9 +252,11 @@ function isPathCompliance(_firstIter, pathStack, patternStack) {
           }
         }
       } else {
-        var match$5 = hasSearch(patternItem);
+        var patternItem$1 = List.hd(patternStack);
+        var pathItem$1 = List.hd(pathStack);
+        var match$5 = hasSearch(patternItem$1);
         if (match$5) {
-          var match$6 = +(Stack.length(pathStack) === 0);
+          var match$6 = +(List.length(pathStack) === 0);
           if (match$6 !== 0) {
             return /* true */1;
           } else {
@@ -242,9 +265,9 @@ function isPathCompliance(_firstIter, pathStack, patternStack) {
             
           }
         } else {
-          var match$7 = +(pathItem === patternItem);
+          var match$7 = +(pathItem$1 === patternItem$1);
           if (match$7 !== 0) {
-            var match$8 = +(Stack.length(pathStack) === 0);
+            var match$8 = +(List.length(pathStack) === 0);
             if (match$8 !== 0) {
               return /* true */1;
             } else {
@@ -258,6 +281,7 @@ function isPathCompliance(_firstIter, pathStack, patternStack) {
         }
       }
     }
+    
   };
 }
 
@@ -271,13 +295,11 @@ function matchPath(url, pattern) {
     var match$2 = stackify[0];
     var p = match$2[1];
     var u = match$2[0];
-    var uCopy = Stack.copy(u);
-    var pCopy = Stack.copy(p);
     if (isPathCompliance(/* true */1, u, p)) {
       return /* Some */[/* tuple */[
                 formatUrl,
-                uCopy,
-                pCopy
+                u,
+                p
               ]];
     } else {
       return /* None */0;

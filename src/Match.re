@@ -87,21 +87,22 @@ let rec loopPush = (url, pattern, urlStack, patternStack) =>
       String.contains_from(pattern, 1, '/') ? String.index_from(pattern, 1, '/') : (-1);
     let uItem = uNextSlash == (-1) ? "" : String.sub(url, 1, uNextSlash - 1);
     let pItem = pNextSlash == (-1) ? "" : String.sub(pattern, 1, pNextSlash - 1);
-    uNextSlash == (-1) ?
-      Stack.push(String.sub(url, 1, String.length(url) - 1), urlStack) :
-      Stack.push(uItem, urlStack);
-    pNextSlash == (-1) ?
-      Stack.push(String.sub(pattern, 1, String.length(pattern) - 1), patternStack) :
-      Stack.push(pItem, patternStack);
+    let newUrlStack =
+      uNextSlash == (-1) ?
+        [String.sub(url, 1, String.length(url) - 1), ...urlStack] : [uItem, ...urlStack];
+    let newPatternStack =
+      pNextSlash == (-1) ?
+        [String.sub(pattern, 1, String.length(pattern) - 1), ...patternStack] :
+        [pItem, ...patternStack];
     let nextUrl =
       uNextSlash == (-1) ? "" : String.sub(url, uNextSlash, String.length(url) - uNextSlash);
     let nextPattern =
       pNextSlash == (-1) ?
         "" : String.sub(pattern, pNextSlash, String.length(pattern) - pNextSlash);
-    loopPush(nextUrl, nextPattern, urlStack, patternStack)
+    loopPush(nextUrl, nextPattern, newUrlStack, newPatternStack)
   };
 
-let loopPush = (url, pattern) => loopPush(url, pattern, Stack.create(), Stack.create());
+let loopPush = (url, pattern) => loopPush(url, pattern, [], []);
 
 /*
   Pop the pattern and path stack until empty
@@ -112,11 +113,11 @@ let loopPush = (url, pattern) => loopPush(url, pattern, Stack.create(), Stack.cr
       + if it is a path then do nothing
  */
 let rec loopPop = (firstIter, path, search, hash, params, pathStack, patternStack) =>
-  if (Stack.is_empty(pathStack) && Stack.is_empty(patternStack)) {
-    {search, hash, params}
-  } else {
-    let patternItem = Stack.pop(patternStack);
-    let pathItem = Stack.pop(pathStack);
+  switch (pathStack, patternStack) {
+  | ([], []) => {search, hash, params}
+  | (pathStack, patternStack) =>
+    let patternItem = List.hd(patternStack);
+    let pathItem = List.hd(pathStack);
     if (firstIter) {
       switch (hasHash(pathItem)) {
       | NoHash =>
@@ -143,13 +144,13 @@ let rec loopPop = (firstIter, path, search, hash, params, pathStack, patternStac
     } else {
       switch (hasSearch(patternItem)) {
       | NoSearch =>
-        Stack.length(pathStack) == 0 ?
+        List.length(pathStack) == 0 ?
           loopPop(false, path, "?" ++ search, hash, params, pathStack, patternStack) :
           loopPop(false, path, search, hash, params, pathStack, patternStack)
       | Search(_) =>
         let s = String.sub(patternItem, 1, String.length(patternItem) - 1);
         Js.Dict.set(params, s, pathItem);
-        Stack.length(pathStack) == 0 ?
+        List.length(pathStack) == 0 ?
           loopPop(
             false,
             path,
@@ -218,36 +219,36 @@ let parseUrl = (url, urlStack, patternStack) =>
      - If not compliant stop and return false
  */
 let rec isPathCompliance = (firstIter, pathStack, patternStack) =>
-  if (Stack.is_empty(pathStack) && Stack.is_empty(patternStack)) {
-    true
-  } else {
-    let patternItem = Stack.pop(patternStack);
-    let pathItem = Stack.pop(pathStack);
-    if (firstIter) {
-      switch (hasHash(pathItem)) {
-      | NoHash =>
-        switch (hasSearch(patternItem)) {
-        | NoSearch =>
-          pathItem != patternItem ? false : isPathCompliance(false, pathStack, patternStack)
-        | Search(_) => isPathCompliance(false, pathStack, patternStack)
-        }
-      | Hash(loc) =>
-        switch (hasSearch(patternItem)) {
-        | NoSearch =>
-          String.sub(pathItem, 0, loc) != patternItem ?
-            false : isPathCompliance(false, pathStack, patternStack)
-        | Search(_) => isPathCompliance(false, pathStack, patternStack)
-        }
-      }
-    } else {
+  switch (firstIter, pathStack, patternStack) {
+  | (_, [], []) => true
+  | (true, pathStack, patternStack) =>
+    let patternItem = List.hd(patternStack);
+    let pathItem = List.hd(pathStack);
+    switch (hasHash(pathItem)) {
+    | NoHash =>
       switch (hasSearch(patternItem)) {
       | NoSearch =>
-        pathItem == patternItem ?
-          Stack.length(pathStack) == 0 ? true : isPathCompliance(false, pathStack, patternStack) :
-          false
-      | Search(_) =>
-        Stack.length(pathStack) == 0 ? true : isPathCompliance(false, pathStack, patternStack)
+        pathItem != patternItem ? false : isPathCompliance(false, pathStack, patternStack)
+      | Search(_) => isPathCompliance(false, pathStack, patternStack)
       }
+    | Hash(loc) =>
+      switch (hasSearch(patternItem)) {
+      | NoSearch =>
+        String.sub(pathItem, 0, loc) != patternItem ?
+          false : isPathCompliance(false, pathStack, patternStack)
+      | Search(_) => isPathCompliance(false, pathStack, patternStack)
+      }
+    }
+  | (false, pathStack, patternStack) =>
+    let patternItem = List.hd(patternStack);
+    let pathItem = List.hd(pathStack);
+    switch (hasSearch(patternItem)) {
+    | NoSearch =>
+      pathItem == patternItem ?
+        List.length(pathStack) == 0 ? true : isPathCompliance(false, pathStack, patternStack) :
+        false
+    | Search(_) =>
+      List.length(pathStack) == 0 ? true : isPathCompliance(false, pathStack, patternStack)
     }
   };
 
@@ -257,10 +258,8 @@ let matchPath = (url, pattern) => {
   let stackify = loopPush(formatUrl, formatPattern);
   switch stackify {
   | Some((u, p)) =>
-    let uCopy = Stack.copy(u);
-    let pCopy = Stack.copy(p);
     if (isPathCompliance(true, u, p)) {
-      Some((formatUrl, uCopy, pCopy))
+      Some((formatUrl, u, p))
     } else {
       None
     }

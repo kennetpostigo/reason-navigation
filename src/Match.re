@@ -82,22 +82,25 @@ let loopPush = (url, pattern) => {
     | ("", _)
     | (_, "") => None
     | (url, pattern) =>
-      let uNextSlash = String.contains_from(url, 1, '/') ? String.index_from(url, 1, '/') : (-1);
-      let pNextSlash =
-        String.contains_from(pattern, 1, '/') ? String.index_from(pattern, 1, '/') : (-1);
-      let uItem = uNextSlash == (-1) ? "" : String.sub(url, 1, uNextSlash - 1);
-      let pItem = pNextSlash == (-1) ? "" : String.sub(pattern, 1, pNextSlash - 1);
-      let newUrls =
-        uNextSlash == (-1) ?
-          [String.sub(url, 1, String.length(url) - 1), ...urls] : [uItem, ...urls];
-      let newPatterns =
-        pNextSlash == (-1) ?
-          [String.sub(pattern, 1, String.length(pattern) - 1), ...patterns] : [pItem, ...patterns];
-      let nextUrl =
-        uNextSlash == (-1) ? "" : String.sub(url, uNextSlash, String.length(url) - uNextSlash);
-      let nextPattern =
-        pNextSlash == (-1) ?
-          "" : String.sub(pattern, pNextSlash, String.length(pattern) - pNextSlash);
+      let (newUrls, nextUrl) =
+        if (String.contains_from(url, 1, '/')) {
+          let uNextSlash = String.index_from(url, 1, '/');
+          let uItem = String.sub(url, 1, uNextSlash - 1);
+          ([uItem, ...urls], String.sub(url, uNextSlash, String.length(url) - uNextSlash))
+        } else {
+          ([String.sub(url, 1, String.length(url) - 1), ...urls], "")
+        };
+      let (newPatterns, nextPattern) =
+        if (String.contains_from(pattern, 1, '/')) {
+          let pNextSlash = String.index_from(pattern, 1, '/');
+          let pItem = String.sub(pattern, 1, pNextSlash - 1);
+          (
+            [pItem, ...patterns],
+            String.sub(pattern, pNextSlash, String.length(pattern) - pNextSlash)
+          )
+        } else {
+          ([String.sub(pattern, 1, String.length(pattern) - 1), ...patterns], "")
+        };
       loopPush(nextUrl, nextPattern, newUrls, newPatterns)
     };
   loopPush(url, pattern, [], [])
@@ -221,34 +224,30 @@ let parseUrl = (url, urls, patterns) =>
  */
 let rec isPathCompliance = (firstIter, paths, patterns) =>
   switch (firstIter, paths, patterns) {
+  | (_, [_head, ..._tail], [])
+  | (_, [], [_head, ..._tail]) =>
+    /* TODO: switch to a data structure that naturally maintains this invariant */
+    raise(Invalid_argument("isPathCompliance: paths length and patterns length not the same!"))
   | (_, [], []) => true
-  | (true, paths, patterns) =>
-    let patternItem = List.hd(patterns);
-    let pathItem = List.hd(paths);
-    let patterns = List.tl(patterns);
-    let paths = List.tl(paths);
-    switch (hasHash(pathItem)) {
+  | (true, [pathHead, ...paths], [patternHead, ...patterns]) =>
+    switch (hasHash(pathHead)) {
     | NoHash =>
-      switch (hasSearch(patternItem)) {
-      | NoSearch => pathItem != patternItem ? false : isPathCompliance(false, paths, patterns)
+      switch (hasSearch(patternHead)) {
+      | NoSearch => pathHead != patternHead ? false : isPathCompliance(false, paths, patterns)
       | Search(_) => isPathCompliance(false, paths, patterns)
       }
     | Hash(loc) =>
-      switch (hasSearch(patternItem)) {
+      switch (hasSearch(patternHead)) {
       | NoSearch =>
-        String.sub(pathItem, 0, loc) != patternItem ?
+        String.sub(pathHead, 0, loc) != patternHead ?
           false : isPathCompliance(false, paths, patterns)
       | Search(_) => isPathCompliance(false, paths, patterns)
       }
     }
-  | (false, paths, patterns) =>
-    let patternItem = List.hd(patterns);
-    let pathItem = List.hd(paths);
-    let patterns = List.tl(patterns);
-    let paths = List.tl(paths);
-    switch (hasSearch(patternItem)) {
+  | (false, [pathHead, ...paths], [patternHead, ...patterns]) =>
+    switch (hasSearch(patternHead)) {
     | NoSearch =>
-      pathItem == patternItem ?
+      pathHead == patternHead ?
         List.length(paths) == 0 ? true : isPathCompliance(false, paths, patterns) : false
     | Search(_) => List.length(paths) == 0 ? true : isPathCompliance(false, paths, patterns)
     }

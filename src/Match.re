@@ -82,22 +82,25 @@ let loopPush = (url, pattern) => {
     | ("", _)
     | (_, "") => None
     | (url, pattern) =>
-      let uNextSlash = String.contains_from(url, 1, '/') ? String.index_from(url, 1, '/') : (-1);
-      let pNextSlash =
-        String.contains_from(pattern, 1, '/') ? String.index_from(pattern, 1, '/') : (-1);
-      let uItem = uNextSlash == (-1) ? "" : String.sub(url, 1, uNextSlash - 1);
-      let pItem = pNextSlash == (-1) ? "" : String.sub(pattern, 1, pNextSlash - 1);
-      let newUrls =
-        uNextSlash == (-1) ?
-          [String.sub(url, 1, String.length(url) - 1), ...urls] : [uItem, ...urls];
-      let newPatterns =
-        pNextSlash == (-1) ?
-          [String.sub(pattern, 1, String.length(pattern) - 1), ...patterns] : [pItem, ...patterns];
-      let nextUrl =
-        uNextSlash == (-1) ? "" : String.sub(url, uNextSlash, String.length(url) - uNextSlash);
-      let nextPattern =
-        pNextSlash == (-1) ?
-          "" : String.sub(pattern, pNextSlash, String.length(pattern) - pNextSlash);
+      let (newUrls, nextUrl) =
+        if (String.contains_from(url, 1, '/')) {
+          let uNextSlash = String.index_from(url, 1, '/');
+          let uItem = String.sub(url, 1, uNextSlash - 1);
+          ([uItem, ...urls], String.sub(url, uNextSlash, String.length(url) - uNextSlash))
+        } else {
+          ([String.sub(url, 1, String.length(url) - 1), ...urls], "")
+        };
+      let (newPatterns, nextPattern) =
+        if (String.contains_from(pattern, 1, '/')) {
+          let pNextSlash = String.index_from(pattern, 1, '/');
+          let pItem = String.sub(pattern, 1, pNextSlash - 1);
+          (
+            [pItem, ...patterns],
+            String.sub(pattern, pNextSlash, String.length(pattern) - pNextSlash)
+          )
+        } else {
+          ([String.sub(pattern, 1, String.length(pattern) - 1), ...patterns], "")
+        };
       loopPush(nextUrl, nextPattern, newUrls, newPatterns)
     };
   loopPush(url, pattern, [], [])

@@ -4,5 +4,11 @@
   "refmt": 3,
   "reason": { "react-jsx": 2 },
   "bsc-flags": ["-bs-no-version-header"],
-  "bs-dependencies": ["reason-react"]
+  "bs-dependencies": ["reason-react"],
+  "namespace": true,
+  "suffix": ".bs.js",
+  "package-specs": {
+    "module": "commonjs",
+    "in-source": true
+  }
 }

@@ -9,19 +9,19 @@ var Caml_builtin_exceptions = require("bs-platform/lib/js/caml_builtin_exception
 
 function removeTrailingSlash(url) {
   var lastChar = Caml_string.get(url, url.length - 1 | 0);
-  if (lastChar === /* "/" */47) {
-    return $$String.sub(url, 0, url.length - 1 | 0);
-  } else {
+  if (lastChar !== 47) {
     return url;
+  } else {
+    return $$String.sub(url, 0, url.length - 1 | 0);
   }
 }
 
 function addLeadingSlash(url) {
-  var firstChar = Caml_string.get(url, 0);
-  if (firstChar === /* "/" */47) {
-    return url;
-  } else {
+  var match = Caml_string.get(url, 0);
+  if (match !== 47) {
     return "/" + url;
+  } else {
+    return url;
   }
 }
 
@@ -41,59 +41,54 @@ function hasHash(url) {
   }
 }
 
-function loopPush(_url, _pattern, urlStack, patternStack) {
+function loopPush(url, pattern) {
+  var _url = url;
+  var _pattern = pattern;
+  var urlStack = Stack.create(/* () */0);
+  var patternStack = Stack.create(/* () */0);
   while(true) {
-    var pattern = _pattern;
-    var url = _url;
-    if (url === "" && pattern === "") {
-      return /* Some */[/* tuple */[
-                urlStack,
-                patternStack
-              ]];
-    } else {
-      var match = +(url.length === 0);
-      var match$1 = +(pattern.length === 0);
-      if (match !== 0) {
-        if (match$1 !== 0) {
-          return /* Some */[/* tuple */[
-                    urlStack,
-                    patternStack
-                  ]];
-        } else {
-          return /* None */0;
-        }
-      } else if (match$1 !== 0) {
-        return /* None */0;
+    var pattern$1 = _pattern;
+    var url$1 = _url;
+    if (url$1 === "") {
+      if (pattern$1 === "") {
+        return /* Some */[/* tuple */[
+                  urlStack,
+                  patternStack
+                ]];
       } else {
-        var match$2 = $$String.contains_from(url, 1, /* "/" */47);
-        var uNextSlash = match$2 !== 0 ? $$String.index_from(url, 1, /* "/" */47) : -1;
-        var match$3 = $$String.contains_from(pattern, 1, /* "/" */47);
-        var pNextSlash = match$3 !== 0 ? $$String.index_from(pattern, 1, /* "/" */47) : -1;
-        var match$4 = +(uNextSlash === -1);
-        var uItem = match$4 !== 0 ? "" : $$String.sub(url, 1, uNextSlash - 1 | 0);
-        var match$5 = +(pNextSlash === -1);
-        var pItem = match$5 !== 0 ? "" : $$String.sub(pattern, 1, pNextSlash - 1 | 0);
-        var match$6 = +(uNextSlash === -1);
-        if (match$6 !== 0) {
-          Stack.push($$String.sub(url, 1, url.length - 1 | 0), urlStack);
-        } else {
-          Stack.push(uItem, urlStack);
-        }
-        var match$7 = +(pNextSlash === -1);
-        if (match$7 !== 0) {
-          Stack.push($$String.sub(pattern, 1, pattern.length - 1 | 0), patternStack);
-        } else {
-          Stack.push(pItem, patternStack);
-        }
-        var match$8 = +(uNextSlash === -1);
-        var nextUrl = match$8 !== 0 ? "" : $$String.sub(url, uNextSlash, url.length - uNextSlash | 0);
-        var match$9 = +(pNextSlash === -1);
-        var nextPattern = match$9 !== 0 ? "" : $$String.sub(pattern, pNextSlash, pattern.length - pNextSlash | 0);
-        _pattern = nextPattern;
-        _url = nextUrl;
-        continue ;
-        
+        return /* None */0;
       }
+    } else if (pattern$1 === "") {
+      return /* None */0;
+    } else {
+      var match = $$String.contains_from(url$1, 1, /* "/" */47);
+      var uNextSlash = match !== 0 ? $$String.index_from(url$1, 1, /* "/" */47) : -1;
+      var match$1 = $$String.contains_from(pattern$1, 1, /* "/" */47);
+      var pNextSlash = match$1 !== 0 ? $$String.index_from(pattern$1, 1, /* "/" */47) : -1;
+      var match$2 = +(uNextSlash === -1);
+      var uItem = match$2 !== 0 ? "" : $$String.sub(url$1, 1, uNextSlash - 1 | 0);
+      var match$3 = +(pNextSlash === -1);
+      var pItem = match$3 !== 0 ? "" : $$String.sub(pattern$1, 1, pNextSlash - 1 | 0);
+      var match$4 = +(uNextSlash === -1);
+      if (match$4 !== 0) {
+        Stack.push($$String.sub(url$1, 1, url$1.length - 1 | 0), urlStack);
+      } else {
+        Stack.push(uItem, urlStack);
+      }
+      var match$5 = +(pNextSlash === -1);
+      if (match$5 !== 0) {
+        Stack.push($$String.sub(pattern$1, 1, pattern$1.length - 1 | 0), patternStack);
+      } else {
+        Stack.push(pItem, patternStack);
+      }
+      var match$6 = +(uNextSlash === -1);
+      var nextUrl = match$6 !== 0 ? "" : $$String.sub(url$1, uNextSlash, url$1.length - uNextSlash | 0);
+      var match$7 = +(pNextSlash === -1);
+      var nextPattern = match$7 !== 0 ? "" : $$String.sub(pattern$1, pNextSlash, pattern$1.length - pNextSlash | 0);
+      _pattern = nextPattern;
+      _url = nextUrl;
+      continue ;
+      
     }
   };
 }
@@ -271,7 +266,7 @@ function matchPath(url, pattern) {
   var formatUrl = match !== 0 ? url : removeTrailingSlash(addLeadingSlash(url));
   var match$1 = +(pattern === "/");
   var formatPattern = match$1 !== 0 ? pattern : removeTrailingSlash(addLeadingSlash(pattern));
-  var stackify = loopPush(formatUrl, formatPattern, Stack.create(/* () */0), Stack.create(/* () */0));
+  var stackify = loopPush(formatUrl, formatPattern);
   if (stackify) {
     var match$2 = stackify[0];
     var p = match$2[1];

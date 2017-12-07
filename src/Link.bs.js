@@ -2,19 +2,22 @@
 
 var Curry       = require("bs-platform/lib/js/curry.js");
 var React       = require("react");
-var ReasonReact = require("reason-react/lib/js/src/ReasonReact.js");
+var ReasonReact = require("reason-react/src/ReasonReact.js");
 
 var component = ReasonReact.statelessComponent("Link");
 
 function getLinkEventData($$event, history, href, target) {
-  var isLeftClick = +($$event.button === 0);
-  var isModified = +($$event.metaKey || $$event.altKey || $$event.ctrlKey || $$event.shiftKey);
-  var hasNoTarget = +(target === "");
-  if (isLeftClick && !isModified && hasNoTarget) {
+  var modified = +($$event.metaKey || $$event.altKey || $$event.ctrlKey || $$event.shiftKey);
+  var match = $$event.button;
+  if (match !== 0) {
+    return /* () */0;
+  } else if (modified !== 0) {
+    return /* () */0;
+  } else if (target === "") {
     $$event.preventDefault();
     return Curry._1(history[/* actions */1][/* push */0], href);
   } else {
-    return 0;
+    return /* () */0;
   }
 }
 

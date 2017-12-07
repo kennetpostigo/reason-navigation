@@ -3,7 +3,7 @@
 var Block                = require("bs-platform/lib/js/block.js");
 var Curry                = require("bs-platform/lib/js/curry.js");
 var Caml_array           = require("bs-platform/lib/js/caml_array.js");
-var ReasonReact          = require("reason-react/lib/js/src/ReasonReact.js");
+var ReasonReact          = require("reason-react/src/ReasonReact.js");
 var CreateBrowserHistory = require("history/createBrowserHistory");
 
 var component = ReasonReact.reducerComponent("Router");

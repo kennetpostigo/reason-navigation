@@ -224,34 +224,30 @@ let parseUrl = (url, urls, patterns) =>
  */
 let rec isPathCompliance = (firstIter, paths, patterns) =>
   switch (firstIter, paths, patterns) {
+  | (_, [_head, ..._tail], [])
+  | (_, [], [_head, ..._tail]) =>
+    /* TODO: switch to a data structure that naturally maintains this invariant */
+    raise(Invalid_argument("isPathCompliance: paths length and patterns length not the same!"))
   | (_, [], []) => true
-  | (true, paths, patterns) =>
-    let patternItem = List.hd(patterns);
-    let pathItem = List.hd(paths);
-    let patterns = List.tl(patterns);
-    let paths = List.tl(paths);
-    switch (hasHash(pathItem)) {
+  | (true, [patternHead, ...patterns], [pathHead, ...paths]) =>
+    switch (hasHash(pathHead)) {
     | NoHash =>
-      switch (hasSearch(patternItem)) {
-      | NoSearch => pathItem != patternItem ? false : isPathCompliance(false, paths, patterns)
+      switch (hasSearch(patternHead)) {
+      | NoSearch => pathHead != patternHead ? false : isPathCompliance(false, paths, patterns)
       | Search(_) => isPathCompliance(false, paths, patterns)
       }
     | Hash(loc) =>
-      switch (hasSearch(patternItem)) {
+      switch (hasSearch(patternHead)) {
       | NoSearch =>
-        String.sub(pathItem, 0, loc) != patternItem ?
+        String.sub(pathHead, 0, loc) != patternHead ?
           false : isPathCompliance(false, paths, patterns)
       | Search(_) => isPathCompliance(false, paths, patterns)
       }
     }
-  | (false, paths, patterns) =>
-    let patternItem = List.hd(patterns);
-    let pathItem = List.hd(paths);
-    let patterns = List.tl(patterns);
-    let paths = List.tl(paths);
-    switch (hasSearch(patternItem)) {
+  | (false, [pathHead, ...paths], [patternHead, ...patterns]) =>
+    switch (hasSearch(patternHead)) {
     | NoSearch =>
-      pathItem == patternItem ?
+      pathHead == patternHead ?
         List.length(paths) == 0 ? true : isPathCompliance(false, paths, patterns) : false
     | Search(_) => List.length(paths) == 0 ? true : isPathCompliance(false, paths, patterns)
     }

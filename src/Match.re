@@ -114,7 +114,6 @@ let loopPush = (path, pattern) => {
        }
      }
  */
-
 /*
   Pop the pattern and path stack until empty
     - If the fist pop contains a "#" sub from it to the end and set it as the
@@ -200,22 +199,21 @@ let parseUrl = (pathsAndPatterns) => {
      - If not compliant stop and return false
  */
 let isPathCompliant = (pathsAndPatterns) => {
-  let rec remainingIterations = (pathsAndPatterns) =>
-    switch pathsAndPatterns {
+  let rec remainingIterations =
+    fun
     | [] => true
-    | [(singlePath, singlePattern)] =>
-      switch (hasSearch(singlePattern)) {
-      | NoSearch => singlePath == singlePattern
+    | [(pathHead, patternHead)] =>
+      switch (hasSearch(patternHead)) {
+      | NoSearch => pathHead == patternHead
       | Search(_) => true
       }
     | [(pathHead, patternHead), ...rest] =>
       switch (hasSearch(patternHead)) {
       | NoSearch => pathHead == patternHead && remainingIterations(rest)
       | Search(_) => remainingIterations(rest)
-      }
-    };
-  let firstIteration = (pathsAndPatterns) =>
-    switch pathsAndPatterns {
+      };
+  let firstIteration =
+    fun
     | [] => true
     | [(pathHead, patternHead), ...rest] =>
       switch (hasHash(pathHead), hasSearch(patternHead)) {
@@ -224,14 +222,21 @@ let isPathCompliant = (pathsAndPatterns) => {
       | (Hash(loc), NoSearch) =>
         String.sub(pathHead, 0, loc) == patternHead && remainingIterations(rest)
       | (Hash(_), Search(_)) => remainingIterations(rest)
-      }
-    };
+      };
   firstIteration(pathsAndPatterns)
 };
 
 let matchPath = (url, pattern) => {
-  let formatUrl = url == "/" ? url : url |> addLeadingSlash |> removeTrailingSlash;
-  let formatPattern = pattern == "/" ? pattern : pattern |> addLeadingSlash |> removeTrailingSlash;
+  let formatUrl =
+    switch url {
+    | "/" => url
+    | url => url |> addLeadingSlash |> removeTrailingSlash
+    };
+  let formatPattern =
+    switch pattern {
+    | "/" => pattern
+    | pattern => pattern |> addLeadingSlash |> removeTrailingSlash
+    };
   switch (loopPush(formatUrl, formatPattern)) {
   | [] => None
   | pathsAndPatterns =>

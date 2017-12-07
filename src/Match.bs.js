@@ -193,33 +193,33 @@ function parseUrl(pathsAndPatterns) {
 }
 
 function isPathCompliant(pathsAndPatterns) {
-  var remainingIterations = function (_pathsAndPatterns) {
+  var remainingIterations = function (_param) {
     while(true) {
-      var pathsAndPatterns = _pathsAndPatterns;
-      if (pathsAndPatterns) {
-        var rest = pathsAndPatterns[1];
-        var match = pathsAndPatterns[0];
-        var singlePattern = match[1];
-        var singlePath = match[0];
+      var param = _param;
+      if (param) {
+        var rest = param[1];
+        var match = param[0];
+        var patternHead = match[1];
+        var pathHead = match[0];
         if (rest) {
-          var match$1 = hasSearch(singlePattern);
+          var match$1 = hasSearch(patternHead);
           if (match$1) {
-            _pathsAndPatterns = rest;
+            _param = rest;
             continue ;
             
-          } else if (singlePath === singlePattern) {
-            _pathsAndPatterns = rest;
+          } else if (pathHead === patternHead) {
+            _param = rest;
             continue ;
             
           } else {
             return /* false */0;
           }
         } else {
-          var match$2 = hasSearch(singlePattern);
+          var match$2 = hasSearch(patternHead);
           if (match$2) {
             return /* true */1;
           } else {
-            return +(singlePath === singlePattern);
+            return +(pathHead === patternHead);
           }
         }
       } else {
@@ -227,10 +227,10 @@ function isPathCompliant(pathsAndPatterns) {
       }
     };
   };
-  var pathsAndPatterns$1 = pathsAndPatterns;
-  if (pathsAndPatterns$1) {
-    var rest = pathsAndPatterns$1[1];
-    var match = pathsAndPatterns$1[0];
+  var param = pathsAndPatterns;
+  if (param) {
+    var rest = param[1];
+    var match = param[0];
     var patternHead = match[1];
     var pathHead = match[0];
     var match$1 = hasHash(pathHead);
@@ -252,10 +252,8 @@ function isPathCompliant(pathsAndPatterns) {
 }
 
 function matchPath(url, pattern) {
-  var match = +(url === "/");
-  var formatUrl = match !== 0 ? url : removeTrailingSlash(addLeadingSlash(url));
-  var match$1 = +(pattern === "/");
-  var formatPattern = match$1 !== 0 ? pattern : removeTrailingSlash(addLeadingSlash(pattern));
+  var formatUrl = url === "/" ? url : removeTrailingSlash(addLeadingSlash(url));
+  var formatPattern = pattern === "/" ? pattern : removeTrailingSlash(addLeadingSlash(pattern));
   var pathsAndPatterns = loopPush(formatUrl, formatPattern);
   if (pathsAndPatterns && isPathCompliant(pathsAndPatterns)) {
     return /* Some */[/* tuple */[

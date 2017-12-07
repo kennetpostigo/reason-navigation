@@ -17,11 +17,8 @@ let getLinkEventData = (event, history: Router.history, href: string, target: st
 
 let make = (~history: Router.history, ~href: string, ~target: string="", children) => {
   ...component,
-  render: (self) =>
-    /* TODO: huh */
-    self.state == () ?
-      <a href onClick=((ev) => getLinkEventData(ev, history, href, target))>
-        (ReasonReact.arrayToElement(children))
-      </a> :
-      <a href> (ReasonReact.arrayToElement(children)) </a>
+  render: (_self) =>
+    <a href onClick=((ev) => getLinkEventData(ev, history, href, target))>
+      (ReasonReact.arrayToElement(children))
+    </a>
 };

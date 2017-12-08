@@ -1,5 +1,5 @@
 {
-  "name": "ReasonNavigation",
+  "name": "reason-navigation",
   "sources": "src",
   "refmt": 3,
   "reason": { "react-jsx": 2 },

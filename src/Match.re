@@ -31,9 +31,8 @@ let removeTrailingSlash = (url) => {
   }
 };
 
-/* TODO: this throws */
 let addLeadingSlash = (url) =>
-  switch (Str.getC(url, 0) |> Str.someOr(~alt="")) {
+  switch (Str.get(url, 0) |> Str.someOr(~alt="")) {
   | "" => "/"
   | "/" => url
   | _ => "/" ++ url
@@ -41,14 +40,14 @@ let addLeadingSlash = (url) =>
 
 let hasSearch = (url) =>
   if (String.contains(url, ':')) {
-    Search(String.index(url, ':'))
+    Search(Str.index(url, ':') |> Str.someOr(~alt=-1))
   } else {
     NoSearch
   };
 
 let hasHash = (url) =>
   if (String.contains(url, '#')) {
-    Hash(String.index(url, '#'))
+    Hash((Str.index(url, '#') |> Str.someOr(~alt=-1)))
   } else {
     NoHash
   };

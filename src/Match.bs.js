@@ -5,29 +5,43 @@ var Js_exn                  = require("bs-platform/lib/js/js_exn.js");
 var $$String                = require("bs-platform/lib/js/string.js");
 var Caml_format             = require("bs-platform/lib/js/caml_format.js");
 var Caml_string             = require("bs-platform/lib/js/caml_string.js");
+var Str$ReasonNavigation    = require("./Str.bs.js");
 var Caml_builtin_exceptions = require("bs-platform/lib/js/caml_builtin_exceptions.js");
 
 function removeTrailingSlash(url) {
-  var lastChar = Caml_string.get(url, url.length - 1 | 0);
+  var lastChar = Caml_string.get(url, (function (param) {
+            return Str$ReasonNavigation.someOr(param, 1);
+          })(Str$ReasonNavigation.length(url)) - 1 | 0);
   if (lastChar !== 47) {
     return url;
   } else {
-    return $$String.sub(url, 0, url.length - 1 | 0);
+    return (function (param) {
+                return Str$ReasonNavigation.someOr(param, url);
+              })(Str$ReasonNavigation.sub(url, 0, (function (param) {
+                        return Str$ReasonNavigation.someOr(param, 1);
+                      })(Str$ReasonNavigation.length(url)) - 1 | 0));
   }
 }
 
 function addLeadingSlash(url) {
-  var match = Caml_string.get(url, 0);
-  if (match !== 47) {
-    return "/" + url;
-  } else {
-    return url;
+  var match = (function (param) {
+        return Str$ReasonNavigation.someOr(param, "");
+      })(Str$ReasonNavigation.get(url, 0));
+  switch (match) {
+    case "" : 
+        return "/";
+    case "/" : 
+        return url;
+    default:
+      return "/" + url;
   }
 }
 
 function hasSearch(url) {
   if ($$String.contains(url, /* ":" */58)) {
-    return /* Search */[$$String.index(url, /* ":" */58)];
+    return /* Search */[(function (param) {
+                  return Str$ReasonNavigation.someOr(param, -1);
+                })(Str$ReasonNavigation.index(url, /* ":" */58))];
   } else {
     return /* NoSearch */0;
   }
@@ -35,13 +49,50 @@ function hasSearch(url) {
 
 function hasHash(url) {
   if ($$String.contains(url, /* "#" */35)) {
-    return /* Hash */[$$String.index(url, /* "#" */35)];
+    return /* Hash */[(function (param) {
+                  return Str$ReasonNavigation.someOr(param, -1);
+                })(Str$ReasonNavigation.index(url, /* "#" */35))];
   } else {
     return /* NoHash */0;
   }
 }
 
-function loopPush(path, pattern) {
+function getInt(params, field) {
+  var match = params[field];
+  if (match !== undefined) {
+    var exit = 0;
+    var x;
+    try {
+      x = Caml_format.caml_int_of_string(match);
+      exit = 1;
+    }
+    catch (raw_exn){
+      var exn = Js_exn.internalToOCamlException(raw_exn);
+      if (exn[0] === Caml_builtin_exceptions.failure) {
+        return /* None */0;
+      } else {
+        throw exn;
+      }
+    }
+    if (exit === 1) {
+      return /* Some */[x];
+    }
+    
+  } else {
+    return /* None */0;
+  }
+}
+
+function getString(params, field) {
+  var match = params[field];
+  if (match !== undefined) {
+    return /* Some */[match];
+  } else {
+    return /* None */0;
+  }
+}
+
+function stringToPath(path, pattern) {
   var _path = path;
   var _pattern = pattern;
   var _pathsAndPatterns = /* [] */0;
@@ -223,7 +274,7 @@ function isPathCompliant(pathsAndPatterns) {
 function matchPath(url, pattern) {
   var formatUrl = url === "/" ? url : removeTrailingSlash(addLeadingSlash(url));
   var formatPattern = pattern === "/" ? pattern : removeTrailingSlash(addLeadingSlash(pattern));
-  var pathsAndPatterns = loopPush(formatUrl, formatPattern);
+  var pathsAndPatterns = stringToPath(formatUrl, formatPattern);
   if (pathsAndPatterns && isPathCompliant(pathsAndPatterns)) {
     return /* Some */[/* tuple */[
               formatUrl,
@@ -234,49 +285,14 @@ function matchPath(url, pattern) {
   }
 }
 
-function getInt(params, field) {
-  var match = params[field];
-  if (match !== undefined) {
-    var exit = 0;
-    var x;
-    try {
-      x = Caml_format.caml_int_of_string(match);
-      exit = 1;
-    }
-    catch (raw_exn){
-      var exn = Js_exn.internalToOCamlException(raw_exn);
-      if (exn[0] === Caml_builtin_exceptions.failure) {
-        return /* None */0;
-      } else {
-        throw exn;
-      }
-    }
-    if (exit === 1) {
-      return /* Some */[x];
-    }
-    
-  } else {
-    return /* None */0;
-  }
-}
-
-function getString(params, field) {
-  var match = params[field];
-  if (match !== undefined) {
-    return /* Some */[match];
-  } else {
-    return /* None */0;
-  }
-}
-
 exports.removeTrailingSlash = removeTrailingSlash;
 exports.addLeadingSlash     = addLeadingSlash;
 exports.hasSearch           = hasSearch;
 exports.hasHash             = hasHash;
-exports.loopPush            = loopPush;
+exports.getInt              = getInt;
+exports.getString           = getString;
+exports.stringToPath        = stringToPath;
 exports.parseUrl            = parseUrl;
 exports.isPathCompliant     = isPathCompliant;
 exports.matchPath           = matchPath;
-exports.getInt              = getInt;
-exports.getString           = getString;
 /* No side effect */

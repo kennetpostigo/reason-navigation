@@ -23,7 +23,7 @@ let indexFrom = (str, index, char) =>
   | nextIndex => Some(nextIndex)
   };
 
-let getC = (str, index) =>
+let get = (str, index) =>
   switch str.[index] {
   | exception (Invalid_argument(_)) => None
   | chr => Some(String.make(1, chr))

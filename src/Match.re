@@ -1,22 +1,4 @@
 /*
-  Sample:
-  let make = (_children) => {
-   ...component,
-   render: (_self) =>
-     <Router>
-       (
-         (location, push) =>
-           <div>
-             <h1> (U.se("TEST SPA!!!!!")) </h1>
-             <Link location push href="game"> (U.se("GAME")) </Link>
-             <Route location path="/" render=(() => <Landing />) />
-             <Route location path="/game" render=(() => <Canvas />) />
-             <Route location path="/highscores" render=(() => <HighScore />) />
-           </div>
-       )
-     </Router>
-  };
-
   Process:
   - When <Router /> mounts it listens to changes and updates state
   - <Router /> has a matched field in state, this is used to check that when a url is hit
@@ -31,6 +13,8 @@ type t = {
   params: Js.Dict.t(string)
 };
 
+type path = list((string, string));
+
 type search =
   | Search(int)
   | NoSearch;
@@ -39,19 +23,19 @@ type hash =
   | Hash(int)
   | NoHash;
 
-/* TODO: this throws */
 let removeTrailingSlash = (url) => {
-  let lastChar = url.[String.length(url) - 1];
+  let lastChar = url.[(Str.length(url) |> Str.someOr(~alt=1)) - 1];
   switch lastChar {
-  | '/' => String.sub(url, 0, String.length(url) - 1)
+  | '/' => Str.sub(url, 0, (Str.length(url) |> Str.someOr(~alt=1)) - 1) |> Str.someOr(~alt=url)
   | _ => url
   }
 };
 
 /* TODO: this throws */
 let addLeadingSlash = (url) =>
-  switch url.[0] {
-  | '/' => url
+  switch (Str.getC(url, 0) |> Str.someOr(~alt="")) {
+  | "" => "/"
+  | "/" => url
   | _ => "/" ++ url
   };
 
@@ -69,14 +53,30 @@ let hasHash = (url) =>
     NoHash
   };
 
+let getInt = (params, field) =>
+  switch (Js.Dict.get(params, field)) {
+  | Some(v) =>
+    switch (int_of_string(v)) {
+    | x => Some(x)
+    | exception (Failure(_)) => None
+    }
+  | None => None
+  };
+
+let getString = (params, field) =>
+  switch (Js.Dict.get(params, field)) {
+  | Some(v) => Some(v)
+  | None => None
+  };
+
 /*
   Iterate through the path and pattern
     - push the path into a path stack
     - push the pattern into a pattern stack
  */
 /* TODO: this throws because of string ops */
-let loopPush = (path, pattern) => {
-  let rec loopPush = (path, pattern, pathsAndPatterns) =>
+let stringToPath = (path, pattern) => {
+  let rec stringToPath = (path, pattern, pathsAndPatterns) =>
     switch (path, pattern) {
     | ("", "") => pathsAndPatterns
     | ("", _)
@@ -98,22 +98,11 @@ let loopPush = (path, pattern) => {
         } else {
           (String.sub(pattern, 1, String.length(pattern) - 1), "")
         };
-      loopPush(nextUrl, nextPattern, [(newUrlHead, newPatternHead), ...pathsAndPatterns])
+      stringToPath(nextUrl, nextPattern, [(newUrlHead, newPatternHead), ...pathsAndPatterns])
     };
-  loopPush(path, pattern, [])
+  stringToPath(path, pattern, [])
 };
 
-/*
-   Generate a Url Object from a Url:
-    {
-       path: "/search/something1/thing#someHash",
-       search: "?query=something1",
-       hash: "#someHash",
-       params: {
-         query: "something1"
-       }
-     }
- */
 /*
   Pop the pattern and path stack until empty
     - If the fist pop contains a "#" sub from it to the end and set it as the
@@ -168,20 +157,6 @@ let parseUrl = (pathsAndPatterns) => {
 };
 
 /*
-   Generate a Url from a Url Object:
-    {
-       path: "/search/something1",
-       search: "?query=something1",
-       hash: "#someHash"
-       params: {
-         query: "something1"
-       }
-     }
-   - Pattern: "/search/:query"
-   - Url: "/search/something1"
- */
-/* let parseUrlObj = (urlObj) => {}; */
-/*
    Compliance Rules:
    - static path: Must Be equal verbatim
    - query param: value doesn't matter
@@ -229,7 +204,7 @@ let matchPath = (url, pattern) => {
     | "/" => pattern
     | pattern => pattern |> addLeadingSlash |> removeTrailingSlash
     };
-  switch (loopPush(formatUrl, formatPattern)) {
+  switch (stringToPath(formatUrl, formatPattern)) {
   | [] => None
   | pathsAndPatterns =>
     if (isPathCompliant(pathsAndPatterns)) {
@@ -239,19 +214,3 @@ let matchPath = (url, pattern) => {
     }
   }
 };
-
-let getInt = (params, field) =>
-  switch (Js.Dict.get(params, field)) {
-  | Some(v) =>
-    switch (int_of_string(v)) {
-    | x => Some(x)
-    | exception (Failure(_)) => None
-    }
-  | None => None
-  };
-
-let getString = (params, field) =>
-  switch (Js.Dict.get(params, field)) {
-  | Some(v) => Some(v)
-  | None => None
-  };

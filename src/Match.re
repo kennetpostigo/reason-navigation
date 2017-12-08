@@ -39,17 +39,15 @@ let addLeadingSlash = (url) =>
   };
 
 let hasSearch = (url) =>
-  if (String.contains(url, ':')) {
-    Search(Str.index(url, ':') |> Str.someOr(~alt=-1))
-  } else {
-    NoSearch
+  switch (String.contains(url, ':')) {
+    | true => Search(Str.index(url, ':') |> Str.someOr(~alt=-1))
+    | false => NoSearch
   };
 
 let hasHash = (url) =>
-  if (String.contains(url, '#')) {
-    Hash((Str.index(url, '#') |> Str.someOr(~alt=-1)))
-  } else {
-    NoHash
+  switch (String.contains(url, '#')) {
+    | true => Hash((Str.index(url, '#') |> Str.someOr(~alt=-1)))
+    | false => NoHash
   };
 
 let getInt = (params, field) =>
@@ -82,20 +80,20 @@ let stringToPath = (path, pattern) => {
     | (_, "") => []
     | (path, pattern) =>
       let (newUrlHead, nextUrl) =
-        if (String.contains_from(path, 1, '/')) {
-          let uNextSlash = String.index_from(path, 1, '/');
-          let uItem = String.sub(path, 1, uNextSlash - 1);
-          (uItem, String.sub(path, uNextSlash, String.length(path) - uNextSlash))
-        } else {
-          (String.sub(path, 1, String.length(path) - 1), "")
+        switch (String.contains_from(path, 1, '/')) {
+        | true => 
+            let nextUrlSlash = String.index_from(path, 1, '/');
+            let urlItem = String.sub(path, 1, nextUrlSlash - 1);
+            (urlItem, String.sub(path, nextUrlSlash, String.length(path) - nextUrlSlash))
+        | false =>  (String.sub(path, 1, String.length(path) - 1), "")
         };
       let (newPatternHead, nextPattern) =
-        if (String.contains_from(pattern, 1, '/')) {
-          let pNextSlash = String.index_from(pattern, 1, '/');
-          let pItem = String.sub(pattern, 1, pNextSlash - 1);
-          (pItem, String.sub(pattern, pNextSlash, String.length(pattern) - pNextSlash))
-        } else {
-          (String.sub(pattern, 1, String.length(pattern) - 1), "")
+        switch (String.contains_from(pattern, 1, '/')) {
+         | true =>  
+            let nextPatternSlash = String.index_from(pattern, 1, '/');
+            let patternItem = String.sub(pattern, 1, nextPatternSlash - 1);
+            (patternItem, String.sub(pattern, nextPatternSlash, String.length(pattern) - nextPatternSlash))
+        | false => (String.sub(pattern, 1, String.length(pattern) - 1), "")
         };
       stringToPath(nextUrl, nextPattern, [(newUrlHead, newPatternHead), ...pathsAndPatterns])
     };

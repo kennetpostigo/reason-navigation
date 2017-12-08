@@ -124,6 +124,5 @@ function make($staropt$star, children) {
   return newrecord;
 }
 
-exports.component = component;
-exports.make      = make;
+exports.make = make;
 /* component Not a pure module */

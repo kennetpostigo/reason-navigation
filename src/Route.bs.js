@@ -27,6 +27,5 @@ function make(history, path, render, _) {
   return newrecord;
 }
 
-exports.component = component;
-exports.make      = make;
+exports.make = make;
 /* component Not a pure module */

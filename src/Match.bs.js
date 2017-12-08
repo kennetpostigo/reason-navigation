@@ -38,7 +38,8 @@ function addLeadingSlash(url) {
 }
 
 function hasSearch(url) {
-  if ($$String.contains(url, /* ":" */58)) {
+  var match = $$String.contains(url, /* ":" */58);
+  if (match !== 0) {
     return /* Search */[(function (param) {
                   return Str$ReasonNavigation.someOr(param, -1);
                 })(Str$ReasonNavigation.index(url, /* ":" */58))];
@@ -48,7 +49,8 @@ function hasSearch(url) {
 }
 
 function hasHash(url) {
-  if ($$String.contains(url, /* "#" */35)) {
+  var match = $$String.contains(url, /* "#" */35);
+  if (match !== 0) {
     return /* Hash */[(function (param) {
                   return Str$ReasonNavigation.someOr(param, -1);
                 })(Str$ReasonNavigation.index(url, /* "#" */35))];
@@ -109,43 +111,45 @@ function stringToPath(path, pattern) {
     } else if (pattern$1 === "") {
       return /* [] */0;
     } else {
-      var match;
-      if ($$String.contains_from(path$1, 1, /* "/" */47)) {
-        var uNextSlash = $$String.index_from(path$1, 1, /* "/" */47);
-        var uItem = $$String.sub(path$1, 1, uNextSlash - 1 | 0);
-        match = /* tuple */[
-          uItem,
-          $$String.sub(path$1, uNextSlash, path$1.length - uNextSlash | 0)
+      var match = $$String.contains_from(path$1, 1, /* "/" */47);
+      var match$1;
+      if (match !== 0) {
+        var nextUrlSlash = $$String.index_from(path$1, 1, /* "/" */47);
+        var urlItem = $$String.sub(path$1, 1, nextUrlSlash - 1 | 0);
+        match$1 = /* tuple */[
+          urlItem,
+          $$String.sub(path$1, nextUrlSlash, path$1.length - nextUrlSlash | 0)
         ];
       } else {
-        match = /* tuple */[
+        match$1 = /* tuple */[
           $$String.sub(path$1, 1, path$1.length - 1 | 0),
           ""
         ];
       }
-      var match$1;
-      if ($$String.contains_from(pattern$1, 1, /* "/" */47)) {
-        var pNextSlash = $$String.index_from(pattern$1, 1, /* "/" */47);
-        var pItem = $$String.sub(pattern$1, 1, pNextSlash - 1 | 0);
-        match$1 = /* tuple */[
-          pItem,
-          $$String.sub(pattern$1, pNextSlash, pattern$1.length - pNextSlash | 0)
+      var match$2 = $$String.contains_from(pattern$1, 1, /* "/" */47);
+      var match$3;
+      if (match$2 !== 0) {
+        var nextPatternSlash = $$String.index_from(pattern$1, 1, /* "/" */47);
+        var patternItem = $$String.sub(pattern$1, 1, nextPatternSlash - 1 | 0);
+        match$3 = /* tuple */[
+          patternItem,
+          $$String.sub(pattern$1, nextPatternSlash, pattern$1.length - nextPatternSlash | 0)
         ];
       } else {
-        match$1 = /* tuple */[
+        match$3 = /* tuple */[
           $$String.sub(pattern$1, 1, pattern$1.length - 1 | 0),
           ""
         ];
       }
       _pathsAndPatterns = /* :: */[
         /* tuple */[
-          match[0],
-          match$1[0]
+          match$1[0],
+          match$3[0]
         ],
         pathsAndPatterns
       ];
-      _pattern = match$1[1];
-      _path = match[1];
+      _pattern = match$3[1];
+      _path = match$1[1];
       continue ;
       
     }

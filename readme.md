@@ -54,7 +54,7 @@ let make = (_children) => {
                   | Some(v) => Js.log(v)
                   | None => Js.log("None")
                   };
-                  <p> (U.se("Query params!")) </p>
+                  <p> (ReasonReact.stringToElement("Query params!")) </p>
                 }
               )
             />

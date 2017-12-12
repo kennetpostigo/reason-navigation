@@ -1,6 +1,6 @@
 let make:
   (
-    ~history: ReasonNavigation.Router.history,
+    ~history: Router.history,
     ~href: string,
     ~target: string=?,
     ~style: ReactDOMRe.style,

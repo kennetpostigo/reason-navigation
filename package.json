@@ -1,6 +1,6 @@
 {
   "name": "reason-navigation",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "reason navigation",
   "main": "index.js",
   "author": "Kennet Postigo <kennetfpostigo@gmail.com>",

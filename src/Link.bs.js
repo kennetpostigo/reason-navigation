@@ -6,11 +6,12 @@ var ReasonReact = require("reason-react/src/ReasonReact.js");
 
 var component = ReasonReact.statelessComponent("Link");
 
-function make(history, href, $staropt$star, children) {
+function make(history, href, $staropt$star, style, children) {
   var target = $staropt$star ? $staropt$star[0] : "";
   var newrecord = component.slice();
   newrecord[/* render */9] = (function () {
       return React.createElement("a", {
+                  style: style,
                   href: href,
                   onClick: (function (ev) {
                       var $$event = ev;

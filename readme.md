@@ -39,18 +39,18 @@ let make = (_children) => {
   render: (_self) =>
     <Router>
       (
-        (match) =>
+        (history) =>
           <div>
             <h1> (U.se("Reason Router")) </h1>
-            <Link match href="/game"> (U.se("GAME")) </Link>
-            <Route match path="/" render=(() => <Landing match />) />
-            <Route match path="/game" render=(() => <Canvas match />) />
+            <Link history href="/game"> (U.se("GAME")) </Link>
+            <Route history path="/" render=(() => <Landing history />) />
+            <Route history path="/game" render=(() => <Canvas history />) />
             <Route
-              match
+              history
               path="/re/:id"
               render=(
                 () => {
-                  switch (Match.getInt(match.state.params, "id")) {
+                  switch (Match.getInt(history.state.params, "id")) {
                   | Some(v) => Js.log(v)
                   | None => Js.log("None")
                   };
@@ -58,7 +58,7 @@ let make = (_children) => {
                 }
               )
             />
-            <Route match path="/highscores" render=(() => <HighScore match />) />
+            <Route history path="/highscores" render=(() => <HighScore history />) />
           </div>
       )
     </Router>
